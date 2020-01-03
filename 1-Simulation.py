@@ -1,8 +1,16 @@
 import numpy as np
 import numpy.matlib
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import random
+from math import acos, degrees
 
-NAGENTS = 500     # Number of agents
+def dist(x1, x2, y1, y2):
+    return (np.sqrt( (x2 - x1)**2 + (y2 - y1)**2))
+
+
+NAGENTS = 100     # Number of agents
 NTIME = 100    # Number of time steps
 length = 1
 v = 0.00625 * length
@@ -10,11 +18,84 @@ dt = 1.0     # Time step size
 rho = 1.0    # agent density
 error = 0.1  # noice
 
-# Generate Simulation Data
-
 # Agents
 xVec = np.mod(np.random.uniform(0, 1, NAGENTS)*length, length)
 yVec = np.mod(np.random.uniform(0, 1, NAGENTS)*length, length)
+
+# Define Fishing area
+# x = 0.60, 0.80
+# y = 0.20, 0.80
+farea = list(((x, y) for x in np.linspace(0.6, 0.8, 20) for y in np.linspace(0.2, 0.8, 60)))
+
+fxVec = [item[0] for item in farea]
+fyVec = [item[1] for item in farea]
+
+# Define all vessels as fishing = 0
+agents = pd.DataFrame({'fishing_status': np.zeros(NAGENTS),
+                             'alert_status': np.zeros(NAGENTS),
+                             'xLoc': xVec,
+                             'yLoc': yVec,
+                             'fxLoc': random.sample(fxVec, NAGENTS),
+                             'fyLoc': random.sample(fyVec, NAGENTS)})
+
+agents
+
+
+#sns.scatterplot([x1], [y1])
+#sns.scatterplot([x2], [y2])
+#plt.show()
+
+v = 0.0625
+odat = pd.DataFrame()
+for t in range(100):
+    for i in range(100):        
+        
+        # Fishing location
+        fx1 = agents['fxLoc'][i]
+        fy1 = agents['fyLoc'][i]
+        
+        # Vessel Location
+        x1 = agents['xLoc'][i]
+        y1 = agents['yLoc'][i]
+        
+        # Calc angle
+        C = dist(x1, fx1, y1, fy1) 
+        B = dist(x1, fx1, fy1, fy1) 
+        A = dist(x1, x1, y1, fy1) 
+        
+        radius = C
+        
+        # Calc C-B angle
+        #theta = acos( (B**2 + C**2 - A**2) / (2*B*C) )
+        
+        # Calc A-C theta
+        theta = np.arccos( (A**2 + C**2 - B**2) / (2*A*C) )
+        
+        # Update location adjusting for sign
+        if x1 > fx1:
+            x2 = x1 - v * (np.cos(theta) * radius)
+        if x1 <= fx1:
+            x2 = x1 + v * (np.cos(theta) * radius)
+        if y1 > fy1:
+            y2 = y1 - v * (np.sin(theta) * radius)
+        if y1 <= fy1:
+            y2 = y1 + v * (np.sin(theta) * radius)
+        
+        agents['xLoc'][i] = x2
+        agents['yLoc'][i] = y2
+        
+        # Save data 
+        indat = pd.DataFrame({'time': [t], 'vessel': [i], 'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2, 'fx1': fx1, 'fy1': fy1, 'r': radius})
+        odat = pd.concat([odat, indat])
+        
+
+odat = odat.reset_index(drop=True)
+odat.to_feather('data/test_dat.feather')
+
+sns.scatterplot(xVec, yVec)
+sns.scatterplot(fxVec, fyVec)
+plt.show()
+
 
 # Direction
 thVec = np.random.uniform(0, 1, NAGENTS)*2*np.pi
@@ -33,14 +114,9 @@ thData = np.zeros((NTIME, NAGENTS))
 meanTheta = np.zeros((2, NAGENTS))
 neighborVec = np.ones((1, NAGENTS))
 
-# Get distance to illegal vessel
-
-
-# If is within certain range move away (alert)
 
 
 
-ILLEGAL_V = False
 mdat = pd.DataFrame()
 for t in range(1, NTIME):
     print(f"Time = {t}/{NTIME}")
