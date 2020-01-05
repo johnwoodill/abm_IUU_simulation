@@ -9,6 +9,53 @@ from math import acos, degrees
 def dist(x1, x2, y1, y2):
     return (np.sqrt( (x2 - x1)**2 + (y2 - y1)**2))
 
+def vmove(x1, x2, y1, y2, inverse_dist=False):
+    '''
+    Calculate trig angle and return direction
+    Inverse distance moves away from target
+    '''
+    # Calc angle
+    C = dist(x1, x2, y1, y2) 
+    B = dist(x1, x2, y2, y2) 
+    A = dist(x1, x1, y1, y2) 
+    radius = C
+
+    # Get angle at B/C
+    theta = np.arccos( (B**2 + C**2 - A**2) / (2*B*C) )
+
+    if inverse_dist == False:
+        # Update location adjusting for sign
+        if x1 > fx1:
+            x2 = x1 - v * (np.cos(theta) * radius)
+        if x1 < fx1:
+            x2 = x1 + v * (np.cos(theta) * radius)
+        if x1 == fx1:
+            x2 = fx1
+        if y1 > fy1:
+            y2 = y1 - v * (np.sin(theta) * radius)
+        if y1 < fy1:
+            y2 = y1 + v * (np.sin(theta) * radius)
+        if y1 == fy1:
+            y2 = fy1
+        
+    if inverse_dist == True:
+        # Update location adjusting for sign (inverse)
+        if x1 > fx1:
+            x2 = x1 + 2*v * (np.cos(theta) * radius)
+        if x1 < fx1:
+            x2 = x1 - 2*v * (np.cos(theta) * radius)
+        if x1 == fx1:
+            x2 = fx1
+        if y1 > fy1:
+            y2 = y1 + 2*v * (np.sin(theta) * radius)
+        if y1 < fy1:
+            y2 = y1 - 2*v * (np.sin(theta) * radius)
+        if y1 == fy1:
+            y2 = fy1
+            
+    return x2, y2
+       
+      
 
 NAGENTS = 100     # Number of agents
 NTIME = 100    # Number of time steps
@@ -46,8 +93,9 @@ agents
 #plt.show()
 
 v = 0.0625
+e = 0.01
 odat = pd.DataFrame()
-for t in range(100):
+for t in range(250):
     for i in range(100):        
         
         # Fishing location
@@ -58,122 +106,39 @@ for t in range(100):
         x1 = agents['xLoc'][i]
         y1 = agents['yLoc'][i]
         
-        # Calc angle
-        C = dist(x1, fx1, y1, fy1) 
-        B = dist(x1, fx1, fy1, fy1) 
-        A = dist(x1, x1, y1, fy1) 
+        # If at location find new fishing location
+        if (dist(x1, fx1, y1, fy1) <= e):
+            agents['fxLoc'][i] = random.sample(fxVec, 1)[0]
+            agents['fyLoc'][i] = random.sample(fyVec, 1)[0]
         
-        radius = C
+        # Calc distances for all vessels
+        agents['dist'] = dist(x1, agents['xLoc'], y1, agents['yLoc'])
+        dist_check = agents.sort_values('dist')[1:2]
+        dx1 = dist_check['xLoc']
+        dy1 = dist_check['yLoc']
         
-        # Calc C-B angle
-        #theta = acos( (B**2 + C**2 - A**2) / (2*B*C) )
-        
-        # Calc A-C theta
-        theta = np.arccos( (A**2 + C**2 - B**2) / (2*A*C) )
-        
-        # Update location adjusting for sign
-        if x1 > fx1:
-            x2 = x1 - v * (np.cos(theta) * radius)
-        if x1 <= fx1:
-            x2 = x1 + v * (np.cos(theta) * radius)
-        if y1 > fy1:
-            y2 = y1 - v * (np.sin(theta) * radius)
-        if y1 <= fy1:
-            y2 = y1 + v * (np.sin(theta) * radius)
+        # If closests vessel is within error (e) move away from vessel
+        if dist_check['dist'].iat[0] <= e:
+            x2, y2 = vmove(x1, dx1, y1, dy1, inverse_dist=True)        
+        else:
+            x2, y2 = vmove(x1, fx1, y1, fy1)
         
         agents['xLoc'][i] = x2
         agents['yLoc'][i] = y2
         
         # Save data 
-        indat = pd.DataFrame({'time': [t], 'vessel': [i], 'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2, 'fx1': fx1, 'fy1': fy1, 'r': radius})
+        indat = pd.DataFrame({'time': [t], 'vessel': [i], 'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2, 'fx1': fx1, 'fy1': fy1})
         odat = pd.concat([odat, indat])
+    
+    
         
 
 odat = odat.reset_index(drop=True)
 odat.to_feather('data/test_dat.feather')
 
-sns.scatterplot(xVec, yVec)
-sns.scatterplot(fxVec, fyVec)
-plt.show()
 
+# Todo
+# (1) Allow different speeds for fishing vs alert
+# (2) Separation to prevent collisions
+# (3) Alert vessels move away from illegal vessel
 
-# Direction
-thVec = np.random.uniform(0, 1, NAGENTS)*2*np.pi
-
-
-a = np.floor(NTIME/5)
-rIntVec = 0.0665 + 0.0535*np.sin( 2*np.pi*(np.linspace(1, NTIME, NTIME)) / ((NTIME/2) - 2*(np.linspace(1, NTIME, NTIME)/5)) )
-rIntVec = rIntVec / 2
-
-
-v = v/2
-# Data Arrays
-xData = np.zeros((NTIME, NAGENTS))
-yData = np.zeros((NTIME, NAGENTS))
-thData = np.zeros((NTIME, NAGENTS))
-meanTheta = np.zeros((2, NAGENTS))
-neighborVec = np.ones((1, NAGENTS))
-
-
-
-
-mdat = pd.DataFrame()
-for t in range(1, NTIME):
-    print(f"Time = {t}/{NTIME}")
-    rInt = rIntVec[t]
-
-    # Zero out the neighbor vec
-    neighborVec = np.ones((1, NAGENTS))
-    
-    # Compute the mean direction vector for each agent
-    meanTheta = np.zeros((2, NAGENTS))
-    
-    for i in range(2, NAGENTS):
-        # Calculate x (cosine(theta)*radius), y (sine(theta) * radius)
-        meanTheta[:, i] = np.matrix([np.cos(thVec[i]), np.sin(thVec[i])])
-        
-        for j in range(1, i):
-            logic_check = min(abs(xVec[i] - xVec[j]), 
-                              length - abs(xVec[i] - xVec[j]))**2 + min(abs(yVec[i] - yVec[j]), length - abs(yVec[i] - yVec[j]))**2
-            
-            if logic_check < rInt**2:
-                meanTheta[:, i] = meanTheta[:, i] + np.matrix(np.cos(thVec[j]), np.sin(thVec[j]))    
-                meanTheta[:, j] = meanTheta[:, j] + np.matrix(np.cos(thVec[i]), np.sin(thVec[i]))    
-                neighborVec[:, i] = neighborVec[:, i] + 1
-                neighborVec[:, j] = neighborVec[:, j] + 1
-                
-    # calculate mean angle from mean velocity data
-    meanTheta = meanTheta / np.matlib.repmat(neighborVec, 2, 1)
-    
-    
-    
-    stable = np.argwhere(abs(meanTheta[0, :]) > abs(meanTheta[1, :]))
-    unstable = np.argwhere(abs(meanTheta[0, :]) < abs(meanTheta[1, :]))
-        
-    # atan2 function takes in (y_values, x_values) and returns theta in
-    tanTheta_s = np.arctan2(meanTheta[1, stable], meanTheta[0, stable])
-    cotTheta_u = np.arctan2(meanTheta[0, unstable], meanTheta[1, unstable])
-    
-    angle = np.zeros((NAGENTS))
-    angle[stable] = tanTheta_s                # atan(tanTheta_s);
-    angle[unstable] = np.pi/2 - cotTheta_u    # atan(cotTheta_u);
-    
-    # Next step, update positions
-    xVec = np.mod(xVec + v * np.cos(thVec), length)
-    yVec = np.mod(yVec + v * np.sin(thVec), length)
-    
-    # Next step, update agent direction
-    thVec = np.mod(angle + 2 * np.pi * (np.random.normal(0, 1, 500)) * error, 2 * np.pi)
-        
-    indat = pd.DataFrame({'id': pd.Series(range(0, 500)), 't': t, 'x': xVec, 'y': yVec, 'theta': thVec})
-    mdat = pd.concat([mdat, indat])
-    
-
-    
-mdat = mdat.reset_index(drop=True)
-mdat.to_feather('data/sim_data.feather')
-
-
-
-                
-                
