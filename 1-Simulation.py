@@ -7,12 +7,14 @@ import random
 from math import acos, degrees
 
 def dist(x1, x2, y1, y2):
-    return (np.sqrt( (x2 - x1)**2 + (y2 - y1)**2))
+    return ( np.sqrt( (x2 - x1)**2 + (y2 - y1)**2) )
 
-def vmove(x1, x2, y1, y2, inverse_dist=False):
+
+def vmove(x1, x2, y1, y2, inverse_dist=False, vmult=10):
     '''
     Calculate trig angle and return direction
-    Inverse distance moves away from target
+    inverse_dist: Inverse distance moves away from target
+    vmult: velocity multiplier 
     '''
     # Calc angle
     C = dist(x1, x2, y1, y2) 
@@ -21,53 +23,61 @@ def vmove(x1, x2, y1, y2, inverse_dist=False):
     radius = C
 
     # Get angle at B/C
+    #      0          0 - Location of vessel 
+    #      |\
+    #      | \  
+    #    A |  \ C
+    #      |   \   
+    #      |    \              
+    #      |____*\    * - Angle to calculate
+    #         B
     theta = np.arccos( (B**2 + C**2 - A**2) / (2*B*C) )
 
     if inverse_dist == False:
         # Update location adjusting for sign
-        if x1 > fx1:
-            x2 = x1 - v * (np.cos(theta) * radius)
-        if x1 < fx1:
-            x2 = x1 + v * (np.cos(theta) * radius)
-        if x1 == fx1:
-            x2 = fx1
-        if y1 > fy1:
-            y2 = y1 - v * (np.sin(theta) * radius)
-        if y1 < fy1:
-            y2 = y1 + v * (np.sin(theta) * radius)
-        if y1 == fy1:
-            y2 = fy1
+        if x1 > x2:
+            mx2 = x1 - v * (np.cos(theta) * radius)
+        if x1 < x2:
+            mx2 = x1 + v * (np.cos(theta) * radius)
+        if x1 == x2:
+            mx2 = x2
+        if y1 > y2:
+            my2 = y1 - v * (np.sin(theta) * radius)
+        if y1 < y2:
+            my2 = y1 + v * (np.sin(theta) * radius)
+        if y1 == y2:
+           my2 = y2
         
     if inverse_dist == True:
         # Update location adjusting for sign (inverse)
-        if x1 > fx1:
-            x2 = x1 + 2*v * (np.cos(theta) * radius)
-        if x1 < fx1:
-            x2 = x1 - 2*v * (np.cos(theta) * radius)
-        if x1 == fx1:
-            x2 = fx1
-        if y1 > fy1:
-            y2 = y1 + 2*v * (np.sin(theta) * radius)
-        if y1 < fy1:
-            y2 = y1 - 2*v * (np.sin(theta) * radius)
-        if y1 == fy1:
-            y2 = fy1
+        if x1 > x2:
+            mx2 = x1 + vmult*v * (np.cos(theta) * radius)
+        if x1 < x2:
+            mx2 = x1 - vmult*v * (np.cos(theta) * radius)
+        if x1 == x2:
+            mx2 = x2
+        if y1 > y2:
+            my2 = y1 + vmult*v * (np.sin(theta) * radius)
+        if y1 < y2:
+            my2 = y1 - vmult*v * (np.sin(theta) * radius)
+        if y1 == y2:
+            my2 = y2
             
-    return x2, y2
+    return mx2, my2
        
+     
+# Constants
+NAGENTS = 50     # number of agents
+NTIME = 720       # number of time steps
+v = 0.0625        # velocity 
+e = 0.01          # separation error
+IUU_EVENT = 312   # Time of illegal event
+ie = 0.20         # IUU separation error
       
 
-NAGENTS = 100     # Number of agents
-NTIME = 100    # Number of time steps
-length = 1
-v = 0.00625 * length
-dt = 1.0     # Time step size
-rho = 1.0    # agent density
-error = 0.1  # noice
-
 # Agents
-xVec = np.mod(np.random.uniform(0, 1, NAGENTS)*length, length)
-yVec = np.mod(np.random.uniform(0, 1, NAGENTS)*length, length)
+xVec = np.mod(np.random.uniform(0, 1, NAGENTS), 1)
+yVec = np.mod(np.random.uniform(0, 1, NAGENTS), 1)
 
 # Define Fishing area
 # x = 0.60, 0.80
@@ -85,18 +95,49 @@ agents = pd.DataFrame({'fishing_status': np.zeros(NAGENTS),
                              'fxLoc': random.sample(fxVec, NAGENTS),
                              'fyLoc': random.sample(fyVec, NAGENTS)})
 
-agents
 
+# Illegal vessel location data
+ivessel = pd.DataFrame({'xLoc': [0.99], 'yLoc': [0.01], 'fxLoc': [0.70], 'fyLoc': [0.60]})
 
-#sns.scatterplot([x1], [y1])
-#sns.scatterplot([x2], [y2])
-#plt.show()
+# -------------------------------------------------------------------
+# Start simulation
+odat = pd.DataFrame()    # Output data frame to store results
+idat = pd.DataFrame()    # Illegal vessel location data
+for t in range(NTIME):
+    # Day 1 of IUU Event
+    if t == 312:   
+        ivessel['fxLoc'][0] = 0.70
+        ivessel['fyLoc'][0] = 0.30
+    
+    # Day 2 of IUU Event
+    if t == 336:   
+        ivessel['fxLoc'][0] = 0.70
+        ivessel['fyLoc'][0] = 0.80
+    
+    # Day 3 of IUU Event
+    if t == 360:   
+        ivessel['fxLoc'][0] = 0.99
+        ivessel['fyLoc'][0] = 0.99
+    
+    ix1 = ivessel['xLoc'][0]
+    iy1 = ivessel['yLoc'][0]
+    ifx1 = ivessel['fxLoc'][0]
+    ify1 = ivessel['fyLoc'][0]
 
-v = 0.0625
-e = 0.01
-odat = pd.DataFrame()
-for t in range(250):
-    for i in range(100):        
+    # Introduce IUU Event 
+    if t >= IUU_EVENT:
+        # Move vessel
+        ix2, iy2 = vmove(ix1, ifx1, iy1, ify1)
+        
+        # Update vessel
+        ivessel['xLoc'][0] = ix2
+        ivessel['yLoc'][0] = iy2
+        
+    # Save data 
+    iindat = pd.DataFrame({'t': [t], 'x1': ix1, 'y1': iy1, 'fx1': ifx1, 'fy1': ify1})
+    idat = pd.concat([idat, iindat])
+    
+    for i in range(NAGENTS):        
         
         # Fishing location
         fx1 = agents['fxLoc'][i]
@@ -110,15 +151,28 @@ for t in range(250):
         if (dist(x1, fx1, y1, fy1) <= e):
             agents['fxLoc'][i] = random.sample(fxVec, 1)[0]
             agents['fyLoc'][i] = random.sample(fyVec, 1)[0]
+            # fx1 = agents['fxLoc'][i]
+            # fy1 = agents['fyLoc'][i]
         
         # Calc distances for all vessels
         agents['dist'] = dist(x1, agents['xLoc'], y1, agents['yLoc'])
         dist_check = agents.sort_values('dist')[1:2]
-        dx1 = dist_check['xLoc']
-        dy1 = dist_check['yLoc']
+        dx1 = dist_check['xLoc'].iat[0]
+        dy1 = dist_check['yLoc'].iat[0]
         
+        # Get distance to IUU Vessel
+        idist = dist(x1, ix1, y1, iy1)
+                    
+        # Separation:
+        # If close to IUU Vessel move away
+        if (t > IUU_EVENT and idist <= ie):
+            x2, y2 = vmove(x1, ix1, y1, iy1, inverse_dist=True) 
+            agents['alert_status'][i] = 1      
+        elif ( (t > IUU_EVENT) and (t <= (IUU_EVENT + 48)) and (idist >= ie) and (idist < ie + 0.20)):
+            x2 = x1
+            y2 = y1
         # If closests vessel is within error (e) move away from vessel
-        if dist_check['dist'].iat[0] <= e:
+        elif dist_check['dist'].iat[0] <= e:
             x2, y2 = vmove(x1, dx1, y1, dy1, inverse_dist=True)        
         else:
             x2, y2 = vmove(x1, fx1, y1, fy1)
@@ -127,18 +181,26 @@ for t in range(250):
         agents['yLoc'][i] = y2
         
         # Save data 
-        indat = pd.DataFrame({'time': [t], 'vessel': [i], 'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2, 'fx1': fx1, 'fy1': fy1})
+        indat = pd.DataFrame({'t': [t], 'alert_status': agents['alert_status'][i], 'vessel': [i], 'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2, 'fx1': fx1, 'fy1': fy1})
         odat = pd.concat([odat, indat])
+    
+
+        
     
     
         
-
+# Vessel data
 odat = odat.reset_index(drop=True)
-odat.to_feather('data/test_dat.feather')
+odat.to_feather('data/vessel_dat.feather')
+
+# Illegal Vessel Data
+idat = idat.reset_index(drop=True)
+idat.to_feather('data/iuu_vessel_dat.feather')
+
 
 
 # Todo
-# (1) Allow different speeds for fishing vs alert
-# (2) Separation to prevent collisions
+# (1) Allow different speeds for fishing vs alert 
+# (2) Separation to prevent collisions   (DONE)
 # (3) Alert vessels move away from illegal vessel
 
