@@ -10,7 +10,7 @@ def dist(x1, x2, y1, y2):
     return ( np.sqrt( (x2 - x1)**2 + (y2 - y1)**2) )
 
 
-def vmove(x1, x2, y1, y2, inverse_dist=False, vmult=10):
+def vmove(x1, x2, y1, y2, inverse_dist=False, vmult=1):
     '''
     Calculate trig angle and return direction
     inverse_dist: Inverse distance moves away from target
@@ -51,15 +51,15 @@ def vmove(x1, x2, y1, y2, inverse_dist=False, vmult=10):
     if inverse_dist == True:
         # Update location adjusting for sign (inverse)
         if x1 > x2:
-            mx2 = x1 + vmult*v * (np.cos(theta) * radius)
+            mx2 = x1 + vmult * v * (np.cos(theta) * radius)
         if x1 < x2:
-            mx2 = x1 - vmult*v * (np.cos(theta) * radius)
+            mx2 = x1 - vmult * v * (np.cos(theta) * radius)
         if x1 == x2:
             mx2 = x2
         if y1 > y2:
-            my2 = y1 + vmult*v * (np.sin(theta) * radius)
+            my2 = y1 + vmult * v * (np.sin(theta) * radius)
         if y1 < y2:
-            my2 = y1 - vmult*v * (np.sin(theta) * radius)
+            my2 = y1 - vmult * v * (np.sin(theta) * radius)
         if y1 == y2:
             my2 = y2
             
@@ -72,7 +72,7 @@ NTIME = 720       # number of time steps
 v = 0.0625        # velocity 
 e = 0.01          # separation error
 IUU_EVENT = 312   # Time of illegal event
-ie = 0.20         # IUU separation error
+ie = 0.30         # IUU separation error
       
 
 # Agents
@@ -166,7 +166,7 @@ for t in range(NTIME):
         # Separation:
         # If close to IUU Vessel move away
         if (t > IUU_EVENT and idist <= ie):
-            x2, y2 = vmove(x1, ix1, y1, iy1, inverse_dist=True) 
+            x2, y2 = vmove(x1, ix1, y1, iy1, inverse_dist=True, vmult=2) 
             agents['alert_status'][i] = 1      
         elif ( (t > IUU_EVENT) and (t <= (IUU_EVENT + 48)) and (idist >= ie) and (idist < ie + 0.20)):
             x2 = x1
