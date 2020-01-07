@@ -82,15 +82,18 @@ for(i in 2:max(dat$t)){
 new_gif
 
 gg_animate(new_gif, "output.gif")
+anim_save("~/Projects/abm_IUU_simulation/figures/abm_iuu_simulation.gif", new_gif)
 
 
 
 # Kurtosis results
-# ksk <- ksdat %>% 
-#   group_by(t) %>% 
-#   summarise(ks = kurtosis(ks))
-# ksk
-# 
-# ggplot(ksk, aes(t, ks)) + geom_point() + geom_line()
+ksk <- ksdat %>%
+  group_by(t) %>%
+  summarise(ks = kurtosis(ks))
+ksk
+
+ggplot(ksk, aes(t, ks)) + geom_point() + geom_line()
+
+
 
 
