@@ -19,8 +19,8 @@ tail(idat)
 
 length(unique(dat$t))
 
-# p <- ggplot(dat, aes(x1, y1)) +
-p <- ggplot(filter(dat, t==1), aes(x1, y1)) +
+p <- ggplot(dat, aes(x1, y1)) +
+# p <- ggplot(filter(dat, t==1), aes(x1, y1)) +
   theme_bw() +
   geom_point() +
   geom_point(data=idat, color="red") +
