@@ -43,14 +43,13 @@ p <- ggplot(dat, aes(x1, y1)) +
         legend.title = element_blank(), 
         legend.position = c(.5, .025),
         legend.direction = "horizontal", 
-        # legend.box.margin = margin(-10, -10, -10, -10)) +
         legend.margin=margin(t=0, unit='cm')) +
-  labs(title = 'Hour of Month: {current_frame}') +
+  labs(title = 'Hour of Month: {current_frame} \nHour of IUU Event: 313') +
   NULL
 
 p
 
-animate(p, nframes = 100)
+# animate(p, nframes = 100)
 ap1 <- animate(p, nframes = max(dat$t))
 
 
@@ -108,12 +107,12 @@ anim_save("~/Projects/abm_IUU_simulation/figures/abm_iuu_simulation.gif", new_gi
 
 
 # Kurtosis results
-ksk <- ksdat %>%
-  group_by(t) %>%
-  summarise(ks = kurtosis(ks))
-ksk
-
-ggplot(ksk, aes(t, ks)) + geom_point() + geom_line()
+# ksk <- ksdat %>%
+#   group_by(t) %>%
+#   summarise(ks = kurtosis(ks))
+# ksk
+# 
+# ggplot(ksk, aes(t, ks)) + geom_point() + geom_line()
 
 
 

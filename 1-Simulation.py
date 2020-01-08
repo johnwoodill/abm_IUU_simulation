@@ -221,6 +221,7 @@ idat.to_feather('data/iuu_vessel_dat.feather')
 # (3) Alert vessels move away from illegal vessel (DONE)
 # (4) Change color based on status (DONE)
 # (4) Add 99% percentile alert signal min and max
+# (6) In figures add hour of IUU in the title
 
 # Sensitivity Analysis
 # Change sensitivity of ie
