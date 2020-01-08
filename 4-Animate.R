@@ -100,7 +100,7 @@ for(i in 2:max(dat$t)){
   new_gif <- c(new_gif, combined)
 }
 
-new_gif
+# new_gif
 
 # Save animation
 anim_save("~/Projects/abm_IUU_simulation/figures/abm_iuu_simulation.gif", new_gif)
