@@ -19,10 +19,13 @@ tail(idat)
 
 length(unique(dat$t))
 
-p <- ggplot(dat, aes(x1, y1)) + 
+# p <- ggplot(dat, aes(x1, y1)) +
+p <- ggplot(filter(dat, t==1), aes(x1, y1)) +
   theme_bw() +
   geom_point() +
   geom_point(data=idat, color="red") +
+  geom_point(aes(x1, y1, color=factor(alert_status))) +
+  geom_point(aes(x1, y1, color=factor(fishing_status))) +
   annotate("text", x= .7, y= .85, label="Fishing Area", color='blue') +
   geom_segment(aes(x=0.60, xend=0.8, y=0.2, yend=0.20), color='blue') +
   geom_segment(aes(x=0.60, xend=0.8, y=0.8, yend=0.80), color='blue') +
@@ -36,12 +39,21 @@ p <- ggplot(dat, aes(x1, y1)) +
         axis.ticks.x=element_blank(),
         axis.title.y=element_blank(),
         axis.text.y=element_blank(),
-        axis.ticks.y=element_blank()) +
+        axis.ticks.y=element_blank(),
+        legend.title = element_blank(), 
+        legend.position = c(.5, .025),
+        legend.direction = "horizontal", 
+        # legend.box.margin = margin(-10, -10, -10, -10)) +
+        legend.margin=margin(t=0, unit='cm')) +
   labs(title = 'Hour of Month: {current_frame}') +
   NULL
 
 p
+
+animate(p, nframes = 100)
 ap1 <- animate(p, nframes = max(dat$t))
+
+
 # anim_save("abm_iuu_simulation.mp4", a)
 # gg_animate(p, "output.gif")
 
@@ -53,6 +65,7 @@ ksdat = read_feather("~/Projects/abm_IUU_simulation/data/ks_data.feather")
 ksm <- ksdat %>% 
   group_by(t) %>% 
   summarise(ks = mean(ks))
+
 ksm
 
 p2 <- ggplot(ksm, aes(t, ks, group=1)) + 
@@ -81,7 +94,7 @@ for(i in 2:max(dat$t)){
 
 new_gif
 
-gg_animate(new_gif, "output.gif")
+# Save animation
 anim_save("~/Projects/abm_IUU_simulation/figures/abm_iuu_simulation.gif", new_gif)
 
 

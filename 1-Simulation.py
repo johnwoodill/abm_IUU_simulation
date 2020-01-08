@@ -33,6 +33,7 @@ def vmove(x1, x2, y1, y2, inverse_dist=False, vmult=1):
     #         B
     theta = np.arccos( (B**2 + C**2 - A**2) / (2*B*C) )
 
+    # More towards target
     if inverse_dist == False:
         # Update location adjusting for sign
         if x1 > x2:
@@ -47,7 +48,8 @@ def vmove(x1, x2, y1, y2, inverse_dist=False, vmult=1):
             my2 = y1 + v * (np.sin(theta) * radius)
         if y1 == y2:
            my2 = y2
-        
+    
+    # Move away from target
     if inverse_dist == True:
         # Update location adjusting for sign (inverse)
         if x1 > x2:
@@ -69,9 +71,9 @@ def vmove(x1, x2, y1, y2, inverse_dist=False, vmult=1):
 # Constants
 NAGENTS = 50     # number of agents
 NTIME = 720       # number of time steps
+IUU_EVENT = 312   # Time of illegal event
 v = 0.0625        # velocity 
 e = 0.01          # separation error
-IUU_EVENT = 312   # Time of illegal event
 ie = 0.30         # IUU separation error
       
 
@@ -88,8 +90,8 @@ fxVec = [item[0] for item in farea]
 fyVec = [item[1] for item in farea]
 
 # Define all vessels as fishing = 0
-agents = pd.DataFrame({'fishing_status': np.zeros(NAGENTS),
-                             'alert_status': np.zeros(NAGENTS),
+agents = pd.DataFrame({'fishing_status': "Traveling",
+                             'alert_status': "Fishing",
                              'xLoc': xVec,
                              'yLoc': yVec,
                              'fxLoc': random.sample(fxVec, NAGENTS),
@@ -119,6 +121,7 @@ for t in range(NTIME):
         ivessel['fxLoc'][0] = 0.99
         ivessel['fyLoc'][0] = 0.99
     
+    # Assign illegal locations
     ix1 = ivessel['xLoc'][0]
     iy1 = ivessel['yLoc'][0]
     ifx1 = ivessel['fxLoc'][0]
@@ -167,21 +170,34 @@ for t in range(NTIME):
         # If close to IUU Vessel move away
         if (t > IUU_EVENT and idist <= ie):
             x2, y2 = vmove(x1, ix1, y1, iy1, inverse_dist=True, vmult=2) 
-            agents['alert_status'][i] = 1      
+            agents['alert_status'][i] = "Alert"
+        # If outside second margin of IUU don't move
         elif ( (t > IUU_EVENT) and (t <= (IUU_EVENT + 48)) and (idist >= ie) and (idist < ie + 0.20)):
             x2 = x1
             y2 = y1
         # If closests vessel is within error (e) move away from vessel
         elif dist_check['dist'].iat[0] <= e:
-            x2, y2 = vmove(x1, dx1, y1, dy1, inverse_dist=True)        
+            x2, y2 = vmove(x1, dx1, y1, dy1, inverse_dist=True) 
+        # Otherwise, move towards target fishing area       
         else:
             x2, y2 = vmove(x1, fx1, y1, fy1)
+            agents.loc[i, 'alert_status'] = "Fishing"
+            
+        # Fishing vs Traveling vs Alert status
+        if (x2 >= 0.6 and x2 <= 0.8 and y2 >= 0.2 and y2 <= 0.8):
+            agents.loc[i, 'fishing_status'] = "Fishing"
+        else:
+            agents.loc[i, 'fishing_status'] = "Traveling"
+            
+        if (agents['alert_status'][i] == 'Alert'):
+            agents.loc[i, 'fishing_status'] = "Alert"
         
+        # Move vessel 
         agents['xLoc'][i] = x2
         agents['yLoc'][i] = y2
         
         # Save data 
-        indat = pd.DataFrame({'t': [t], 'alert_status': agents['alert_status'][i], 'vessel': [i], 'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2, 'fx1': fx1, 'fy1': fy1})
+        indat = pd.DataFrame({'t': [t], 'fishing_status': agents['fishing_status'][i], 'alert_status': agents['alert_status'][i], 'vessel': [i], 'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2, 'fx1': fx1, 'fy1': fy1})
         odat = pd.concat([odat, indat])
     
 
@@ -202,5 +218,9 @@ idat.to_feather('data/iuu_vessel_dat.feather')
 # Todo
 # (1) Allow different speeds for fishing vs alert 
 # (2) Separation to prevent collisions   (DONE)
-# (3) Alert vessels move away from illegal vessel
+# (3) Alert vessels move away from illegal vessel (DONE)
+# (4) Change color based on status (DONE)
+
+# Sensitivity Analysis
+# Change sensitivity of ie
 
