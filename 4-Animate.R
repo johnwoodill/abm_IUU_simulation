@@ -61,23 +61,31 @@ ap1 <- animate(p, nframes = max(dat$t))
 # KS-Statistic
 ksdat = read_feather("~/Projects/abm_IUU_simulation/data/ks_data.feather")
 
+# Get 99th percentile
+qt98 = quantile(filter(ksdat, t > 50)$ks, c(.975))
+
 # Mean results
 ksm <- ksdat %>% 
   group_by(t) %>% 
-  summarise(ks = mean(ks))
+  summarise(ks = mean(ks)) 
+
+ksm$signal = ifelse(ksm$ks >= qt98, 1, 0)
+ksm$signal = ifelse(ksm$t <= 50, 0, ksm$signal)
 
 ksm
 
-p2 <- ggplot(ksm, aes(t, ks, group=1)) + 
-  geom_point() + 
+p2 <- ggplot(ksm, aes(t, ks, group=1, color = factor(signal))) + 
+  # geom_point() + 
   geom_line() +
   theme_bw() +
   labs(x="Hours in Month", y="Anomaly Index (Mean)") +
+  theme(legend.position = "none") +
+  scale_color_manual(values=c("black", "red")) +
   transition_manual(frames = t) +
   transition_reveal(along = t) +
   enter_fade() +
   NULL
-
+p2
 
 ap2 <- animate(p2, nframes = max(dat$t))
 
