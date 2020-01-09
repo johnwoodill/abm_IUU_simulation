@@ -8,9 +8,6 @@ dat = pd.read_feather('data/vessel_dat.feather')
 
 dat
 
-test = dat[dat.t == 1]
-test
-
 def dist_mat(ndat):
     d = []
     for i in range(len(ndat)):
@@ -38,7 +35,7 @@ dat2.to_feather('data/all_dist_matrix.feather')
 
 # Check dist formula
 # 0-1
-dist(0.629797, 0.224944, 0.339730, 0.909879)
+dist(dat.loc[0, 'x1'], dat.loc[1, 'x1'], dat.loc[0, 'y1'], dat.loc[1, 'y1'])
 
 # 0-2
 dist(0.266381, 0.310365, 0.259279, 0.326251)

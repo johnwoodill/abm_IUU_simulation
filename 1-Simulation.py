@@ -75,7 +75,13 @@ IUU_EVENT = 312   # Time of illegal event
 v = 0.0625        # velocity 
 e = 0.01          # separation error
 ie = 0.30         # IUU separation error
-      
+iee = 0.1        # separation error from other vessels if alert
+FA_X1 = 0.4             # Fishing area coords.
+FA_X2 = 0.8
+FA_Y1 = 0.2
+FA_Y2 = 0.8
+
+
 
 # Agents
 xVec = np.mod(np.random.uniform(0, 1, NAGENTS), 1)
@@ -84,7 +90,7 @@ yVec = np.mod(np.random.uniform(0, 1, NAGENTS), 1)
 # Define Fishing area
 # x = 0.60, 0.80
 # y = 0.20, 0.80
-farea = list(((x, y) for x in np.linspace(0.6, 0.8, 20) for y in np.linspace(0.2, 0.8, 60)))
+farea = list(((x, y) for x in np.linspace(FA_X1, FA_X2, 50) for y in np.linspace(FA_Y1, FA_Y2, 60)))
 
 fxVec = [item[0] for item in farea]
 fyVec = [item[1] for item in farea]
@@ -152,13 +158,13 @@ for t in range(NTIME):
         
         # If at location find new fishing location
         if (dist(x1, fx1, y1, fy1) <= e):
-            agents['fxLoc'][i] = random.sample(fxVec, 1)[0]
-            agents['fyLoc'][i] = random.sample(fyVec, 1)[0]
+            agents.loc[i, 'fxLoc'] = random.sample(fxVec, 1)[0]
+            agents.loc[i, 'fyLoc'] = random.sample(fyVec, 1)[0]
             # fx1 = agents['fxLoc'][i]
             # fy1 = agents['fyLoc'][i]
         
         # Calc distances for all vessels
-        agents['dist'] = dist(x1, agents['xLoc'], y1, agents['yLoc'])
+        agents.loc[:, 'dist'] = dist(x1, agents['xLoc'], y1, agents['yLoc'])
         dist_check = agents.sort_values('dist')[1:2]
         dx1 = dist_check['xLoc'].iat[0]
         dy1 = dist_check['yLoc'].iat[0]
@@ -172,7 +178,9 @@ for t in range(NTIME):
             x2, y2 = vmove(x1, ix1, y1, iy1, inverse_dist=True, vmult=2) 
             agents['alert_status'][i] = "Alert"
         # If outside second margin of IUU don't move
-        elif ( (t > IUU_EVENT) and (t <= (IUU_EVENT + 48)) and (idist >= ie) and (idist < ie + 0.20)):
+        elif ( (t > IUU_EVENT) and (t <= (IUU_EVENT + 48)) and (idist >= ie) and (idist < ie + 0.20) and (dist_check['dist'].iat[0] <= iee)):
+            x2, y2 = vmove(x1, dx1, y1, dy1) 
+        elif ( (t > IUU_EVENT) and (t <= (IUU_EVENT + 48)) and (idist >= ie) and (idist < ie + 0.20) and (dist_check['dist'].iat[0] > iee)):
             x2 = x1
             y2 = y1
         # If closests vessel is within error (e) move away from vessel
@@ -184,7 +192,7 @@ for t in range(NTIME):
             agents.loc[i, 'alert_status'] = "Fishing"
             
         # Fishing vs Traveling vs Alert status
-        if (x2 >= 0.6 and x2 <= 0.8 and y2 >= 0.2 and y2 <= 0.8):
+        if (x2 >= FA_X1 and x2 <= FA_X2 and y2 >= FA_Y1 and y2 <= FA_Y2):
             agents.loc[i, 'fishing_status'] = "Fishing"
         else:
             agents.loc[i, 'fishing_status'] = "Traveling"

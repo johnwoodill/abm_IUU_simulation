@@ -107,12 +107,14 @@ anim_save("~/Projects/abm_IUU_simulation/figures/abm_iuu_simulation.gif", new_gi
 
 
 # Kurtosis results
-# ksk <- ksdat %>%
-#   group_by(t) %>%
-#   summarise(ks = kurtosis(ks))
-# ksk
-# 
-# ggplot(ksk, aes(t, ks)) + geom_point() + geom_line()
+ksk <- ksdat %>%
+  group_by(t) %>%
+  summarise(ks = kurtosis(ks))
+ksk
+
+max(ksk$ks, na.rm = TRUE)
+
+ggplot(ksk, aes(t, ks)) + geom_point() + geom_line() + geom_vline(xintercept = 312+24)
 
 
 
