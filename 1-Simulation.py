@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import random
 from math import acos, degrees
+import scipy.stats
+
 
 def dist(x1, x2, y1, y2):
     return ( np.sqrt( (x2 - x1)**2 + (y2 - y1)**2) )
@@ -67,25 +69,53 @@ def vmove(x1, x2, y1, y2, inverse_dist=False, vmult=1):
             
     return mx2, my2
        
+
      
 # Constants
 NAGENTS = 50     # number of agents
 NTIME = 720       # number of time steps
 IUU_EVENT = 312   # Time of illegal event
 v = 0.0625        # velocity 
-e = 0.01          # separation error
-ie = 0.30         # IUU separation error
-iee = 0.1        # separation error from other vessels if alert
-FA_X1 = 0.4             # Fishing area coords.
+#e = 0.05          # separation error
+#ie = 0.30         # IUU separation error
+#iee = 0.1         # separation error from other vessels if alert
+FA_X1 = 0.4       # Fishing area coords.
 FA_X2 = 0.8
 FA_Y1 = 0.2
 FA_Y2 = 0.8
 
 
-
 # Agents
 xVec = np.mod(np.random.uniform(0, 1, NAGENTS), 1)
 yVec = np.mod(np.random.uniform(0, 1, NAGENTS), 1)
+
+# Separation Errors
+# Vessel Separation Error
+def get_e():
+    return np.random.uniform(0.01, .05)
+
+
+# Vessel IUU Separate Error
+def get_ie():
+    lower = 0.05
+    upper = 0.1
+    mu = 0.05
+    sigma = 0.01
+    N = 1
+    retstats = scipy.stats.truncnorm.rvs((lower-mu)/sigma,(upper-mu)/sigma,loc=mu,scale=sigma,size=N)
+    return retstats
+
+
+# Vessel IUU Separate Error if alert
+def get_iee():
+    lower = 0.01
+    upper = 0.05
+    mu = 0.025
+    sigma = 0.01
+    N = 1
+    retstats = scipy.stats.truncnorm.rvs((lower-mu)/sigma,(upper-mu)/sigma,loc=mu,scale=sigma,size=N)
+    return retstats
+
 
 # Define Fishing area
 # x = 0.60, 0.80
@@ -146,7 +176,11 @@ for t in range(NTIME):
     iindat = pd.DataFrame({'t': [t], 'x1': ix1, 'y1': iy1, 'fx1': ifx1, 'fy1': ify1})
     idat = pd.concat([idat, iindat])
     
-    for i in range(NAGENTS):        
+    for i in range(NAGENTS):       
+
+        e = get_e() 
+        ie = get_ie()
+        iee = get_iee()
         
         # Fishing location
         fx1 = agents['fxLoc'][i]
@@ -228,9 +262,10 @@ idat.to_feather('data/iuu_vessel_dat.feather')
 # (2) Separation to prevent collisions   (DONE)
 # (3) Alert vessels move away from illegal vessel (DONE)
 # (4) Change color based on status (DONE)
-# (4) Add 99% percentile alert signal min and max
-# (6) In figures add hour of IUU in the title
+# (4) Add 99% percentile alert signal min and max (DONE)
+# (6) In figures add hour of IUU in the title (DONE)
 
 # Sensitivity Analysis
 # Change sensitivity of ie
+
 
