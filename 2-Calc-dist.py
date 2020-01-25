@@ -25,7 +25,6 @@ def haversine(lon1, lat1, lon2, lat2):
 
 dat = pd.read_feather('data/vessel_dat.feather')
 
-dat
 
 def dist_mat(ndat):
     d = []
@@ -38,11 +37,12 @@ def dist_mat(ndat):
             x2 = ndat['x1'].iat[j]
             y1 = ndat['y1'].iat[i]
             y2 = ndat['y1'].iat[j]
-            #d += [(v1, v2, dist(x1, x2, y1, y2))]
-            d += [(v1, v2, haversine(y1, x1, y2, x2))]
+            d += [(v1, v2, dist(x1, x2, y1, y2))]
+            #d += [(v1, v2, haversine(y1, x1, y2, x2))]
     distMatrix = pd.DataFrame(d).pivot(index=0, columns=1, values=2)
     distMatrix['t'] = t
-    return distMatrix                
+    return distMatrix  
+
 
 # Get all t
 dat2 = dat.groupby('t').apply(lambda x: dist_mat(x))
@@ -57,8 +57,6 @@ dat2.to_feather('data/all_dist_matrix.feather')
 # 0-1
 dist(dat.loc[0, 'x1'], dat.loc[1, 'x1'], dat.loc[0, 'y1'], dat.loc[1, 'y1'])
 
-# 0-2
-dist(0.266381, 0.310365, 0.259279, 0.326251)
-        
+ 
     
     

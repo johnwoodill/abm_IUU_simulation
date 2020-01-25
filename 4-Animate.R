@@ -13,14 +13,23 @@ setwd("~/Projects/abm_IUU_simulation/")
 dat = read_feather("~/Projects/abm_IUU_simulation/data/vessel_dat.feather")
 head(dat)
 
+# sum: 10886.89
+# sd : 0.1172957
+sum(dat$x1)
+sd(dat$x1)
+
 idat = read_feather("~/Projects/abm_IUU_simulation/data/iuu_vessel_dat.feather")
 head(idat)
 tail(idat)
 
 length(unique(dat$t))
 
+# dat = filter(dat, t <= 90)
+# idat = filter(idat, t <= 90)
+
 p <- ggplot(dat, aes(x1, y1)) +
 # p <- ggplot(filter(dat, t==1), aes(x1, y1)) +
+  labs(y="Latitude", x="Longitude") +
   theme_bw() +
   geom_point() +
   geom_point(data=idat, color="red") +
@@ -34,12 +43,12 @@ p <- ggplot(dat, aes(x1, y1)) +
   transition_manual(frames = t) +
   ylim(min(dat$y1), max(dat$y1)) +
   xlim(min(dat$x1), max(dat$x1)) +
-  theme(axis.title.x=element_blank(),
-        axis.text.x=element_blank(),
-        axis.ticks.x=element_blank(),
-        axis.title.y=element_blank(),
-        axis.text.y=element_blank(),
-        axis.ticks.y=element_blank(),
+  theme(#axis.title.x=element_blank(),
+        # axis.text.x=element_blank(),
+        # axis.ticks.x=element_blank(),
+        #axis.title.y=element_blank(),
+        # axis.text.y=element_blank(),
+        # axis.ticks.y=element_blank(),
         legend.title = element_blank(), 
         legend.position = c(.5, .025),
         legend.direction = "horizontal", 
@@ -106,15 +115,32 @@ anim_save("~/Projects/abm_IUU_simulation/figures/abm_iuu_simulation.gif", new_gi
 
 
 
+# KS-Statistic
+ksdat = read_feather("~/Projects/abm_IUU_simulation/data/ks_data.feather")
+
 # Kurtosis results
 ksk <- ksdat %>%
   group_by(t) %>%
   summarise(kurt = kurtosis(ks))
 ksk
 
+ggplot(ksk, aes(t, kurt)) + geom_point() + 
+  geom_line() + 
+  geom_smooth() +
+  geom_vline(xintercept = 312+24, color='red') +
+  geom_vline(xintercept = 312+48, color='red') +
+  # geom_hline(yintercept = 0, color='red') +
+  NULL
+
+
+ksdat2 = filter(ksdat, t >= 300 & t <= 400)
+ksdat2 = left_join(ksdat2, ksk, by = "t")
+
+ggplot(ksdat2, aes(ks)) + geom_density(aes(color=kurt)) + facet_wrap(~t, scales = "free")
+
+
 max(ksk$kurt, na.rm = TRUE)
 
-ggplot(ksk, aes(t, kurt)) + geom_point() + geom_line() + geom_vline(xintercept = 312+24)
 
 
 
