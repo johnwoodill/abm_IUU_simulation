@@ -19,10 +19,18 @@ def vmove(x1, x2, y1, y2, inverse_dist=False, vel=0.00625, random_dir=False, vmu
     inverse_dist: Inverse distance moves away from target
     vmult: velocity multiplier 
     '''
+    # Get distance to target
+    ldist = dist(x1, x2, y1, y2)
+    vel = ldist/25
+    print(f"ldist: {ldist} - vel: {vel}")
+    vel=1
+
     if random_dir == True:
         # Update location adjusting for sign (inverse)
-        randx = np.linspace(x2 - 1, x2 + 1, 50)
+        randx = np.linspace(x2 - .10, x2 + .10, 50)
+        randy = np.linspace(y2 - .10, y2 + .10, 50)
         x2 = np.random.choice(randx, 1)
+        # y2 = np.random.choice(randy, 1)
 
     # Calc angle
     C = dist(x1, x2, y1, y2) 
@@ -55,7 +63,7 @@ def vmove(x1, x2, y1, y2, inverse_dist=False, vel=0.00625, random_dir=False, vmu
         if y1 < y2:
             my2 = y1 + vel * (np.sin(theta) * radius)
         if y1 == y2:
-           my2 = y2
+            my2 = y2
     
     # Move away from target
     if inverse_dist == True:
@@ -81,10 +89,10 @@ def vmove(x1, x2, y1, y2, inverse_dist=False, vel=0.00625, random_dir=False, vmu
 NAGENTS = 25     # number of agents
 NTIME = 720       # number of time steps
 IUU_EVENT = 312   # Time of illegal event
-v = 0.00625        # velocity 
+v = 0.0625        # velocity 
 iuuv = 0.0625
 e = 0.01          # separation error
-ie = 0.40         # IUU separation error
+ie = 0.35         # IUU separation error
 iee = 0.1         # separation error from other vessels if alert
 FA_X1 = 0.6       # Fishing area coords.
 FA_X2 = 0.8
@@ -229,8 +237,8 @@ for t in range(NTIME):
         if (dist(x1, fx1, y1, fy1) < e):
             agents.loc[i, 'fxLoc'] = random.sample(fxVec, 1)[0]
             agents.loc[i, 'fyLoc'] = random.sample(fyVec, 1)[0]
-            # fx1 = agents['fxLoc'][i]
-            # fy1 = agents['fyLoc'][i]
+            fx1 = agents['fxLoc'][i]
+            fy1 = agents['fyLoc'][i]
         
         # Calc distances for all vessels
         agents.loc[:, 'dist'] = dist(x1, agents['xLoc'], y1, agents['yLoc'])
@@ -246,7 +254,7 @@ for t in range(NTIME):
         # if (t >= IUU_EVENT and t <= IUU_EVENT and idist <= ie):
         if (idist <= ie):
             x2, y2 = vmove(x1, ix1, y1, iy1, inverse_dist=True, vmult=10, random_dir=True) 
-            agents['alert_status'][i] = "Alert"
+            agents.loc[i, 'alert_status'] = "Alert"
 
         # If inside IUU event, far away from iuu, but vessel close to other vessel
         #elif ( (t > IUU_EVENT) and (t <= (IUU_EVENT + 48)) and (idist >= ie) and (idist < ie + 0.20) and (dist_check['dist'].iat[0] <= iee)):

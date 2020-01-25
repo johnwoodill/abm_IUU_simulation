@@ -41,6 +41,8 @@ p <- ggplot(dat, aes(x1, y1)) +
   geom_segment(aes(x=0.60, xend=0.6, y=0.2, yend=0.80), color='blue') +
   geom_segment(aes(x=0.80, xend=0.8, y=0.2, yend=0.80), color='blue') +
   transition_manual(frames = t) +
+  # ylim(-5, 5) +
+  # xlim(-5, 5) +
   ylim(min(dat$y1), max(dat$y1)) +
   xlim(min(dat$x1), max(dat$x1)) +
   theme(#axis.title.x=element_blank(),
@@ -60,7 +62,7 @@ p
 
 # animate(p, nframes = 100)
 ap1 <- animate(p, nframes = max(dat$t))
-
+ap1
 
 # anim_save("abm_iuu_simulation.mp4", a)
 # gg_animate(p, "output.gif")
