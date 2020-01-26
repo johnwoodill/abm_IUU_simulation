@@ -7,10 +7,78 @@ import random
 from math import acos, degrees
 import scipy.stats
 from scipy.stats import norm, kurtosis
+#from sympy.solvers import solve
+#from sympy import Symbol
+#from sympy import Matrix, solve_linear_system
+#from sympy.abc import x, y
+from scipy.optimize import fsolve
 
 
 def dist(x1, x2, y1, y2):
     return ( np.sqrt( (x2 - x1)**2 + (y2 - y1)**2) )
+
+
+# mx2 = x1 + v * (trig)
+# my2 = y1 + v * (trig)
+# Solve for v where dist(x1, mx2, y1, my2)
+def solve_vel(vel, *varss):
+    x1, x2, y1, y2, theta, radius, max_speed = varss
+    # x1 greater than x2
+    if ( (x1 > x2) and (y1 > y2) ):
+        return ( np.sqrt( (x2 - (x1 - (vel * (np.cos(theta) * radius))))**2 + (y2 - (y1 - (vel * (np.sin(theta) * radius))))**2) ) - max_speed
+    if ( (x1 > x2) and (y1 < y2) ):
+        return ( np.sqrt( (x2 - (x1 - (vel * (np.cos(theta) * radius))))**2 + (y2 - (y1 + (vel * (np.sin(theta) * radius))))**2) ) - max_speed
+    if ( (x1 > x2) and (y1 == y2) ):
+        return ( np.sqrt( (x2 - (x1 - (vel * (np.cos(theta) * radius))))**2 + (y2 - y1)**2) ) - max_speed
+    # x1 less than x2
+    if ( (x1 < x2) and (y1 > y2) ):
+        return ( np.sqrt( (x2 - (x1 + (vel * (np.cos(theta) * radius))))**2 + (y2 - (y1 - (vel * (np.sin(theta) * radius))))**2) ) - max_speed
+    if ( (x1 < x2) and (y1 < y2) ):
+        return ( np.sqrt( (x2 - (x1 + (vel * (np.cos(theta) * radius))))**2 + (y2 - (y1 + (vel * (np.sin(theta) * radius))))**2) ) - max_speed    
+    if ( (x1 < x2) and (y1 == y2) ):
+        return ( np.sqrt( (x2 - (x1 + (vel * (np.cos(theta) * radius))))**2 + (y2 - y1)**2) ) - max_speed
+    if ( (x1 == x2) and (y1 > y2) ):
+        return ( np.sqrt( (x2 - x1)**2 + (y2 - (y1 - (vel * (np.sin(theta) * radius))))**2) ) - max_speed
+    if ( (x1 == x2) and (y1 < y2) ):
+       return ( np.sqrt( (x2 - x1)**2 + (y2 - (y1 + (vel * (np.sin(theta) * radius))))**2) ) - max_speed
+    if ( (x1 == x2) and (y1 == y2) ):
+        return vel * 0
+
+       
+   
+
+
+def calc_dist_move(x1, x2, y1, y2, theta, radius, vmult, max_speed):
+    # Solve for velocity
+    # varss = (x1, x2, y1, y2, theta, radius, max_speed)
+    vel = fsolve(solve_vel, 0.01, maxfev = 1000000, args = (x1, x2, y1, y2, theta, radius, max_speed))
+    
+    # Calculate new movement
+    mx2 = x1 + vel * (np.cos(theta) * radius)
+    my2 = y1 + vel * (np.cos(theta) * radius)
+    return mx2, my2, vel
+   
+
+def test_vel(x1, x2, y1, y2, theta, radius, max_speed, vel):
+    return ( np.sqrt( (x2 - (x1 + (vel * (np.cos(theta) * radius))))**2 + (y2 - (y1 + (vel * (np.sin(theta) * radius))))**2) ) - max_speed
+
+
+
+nx2, ny2, nvel = calc_dist_move(x1 = 0.50, x2 =0.80, y1 = 0.10, y2 = 0.60, theta = 25, radius = 0.3, vmult = 1, max_speed = 0.25)
+nvel
+x1 = 0.50
+y1 = 0.10
+theta = 25
+radius = 0.3
+max_speed = 0.25
+
+test_vel(x1, nx2, y1, ny2, theta, radius, max_speed, nvel)
+
+
+
+# dist(x1, nx2, y1, ny2)
+
+
 
 
 def vmove(x1, x2, y1, y2, inverse_dist=False, vel=0.00625, random_dir=False, vmult=1):
@@ -20,10 +88,10 @@ def vmove(x1, x2, y1, y2, inverse_dist=False, vel=0.00625, random_dir=False, vmu
     vmult: velocity multiplier 
     '''
     # Get distance to target
-    ldist = dist(x1, x2, y1, y2)
-    vel = ldist/25
-    print(f"ldist: {ldist} - vel: {vel}")
-    vel=1
+    #ldist = dist(x1, x2, y1, y2)
+    #vel = ldist/25
+    #print(f"ldist: {ldist} - vel: {vel}")
+    #vel=1
 
     if random_dir == True:
         # Update location adjusting for sign (inverse)
@@ -49,19 +117,22 @@ def vmove(x1, x2, y1, y2, inverse_dist=False, vel=0.00625, random_dir=False, vmu
     #         B
     theta = np.arccos( (B**2 + C**2 - A**2) / (2*B*C) )
 
+    vel = fsolve(solve_vel, 0.01, args = (x1, x2, y1, y2, theta, radius, 0.00025))
+    # print(vel)
+
     # More towards target
     if inverse_dist == False:
         # Update location adjusting for sign
         if x1 > x2:
-            mx2 = x1 - vel * (np.cos(theta) * radius)
+            mx2 = x1 - vmult * vel * (np.cos(theta) * radius)
         if x1 < x2:
-            mx2 = x1 + vel * (np.cos(theta) * radius)
+            mx2 = x1 + vmult * vel * (np.cos(theta) * radius)
         if x1 == x2:
             mx2 = x2
         if y1 > y2:
-            my2 = y1 - vel * (np.sin(theta) * radius)
+            my2 = y1 - vmult * vel * (np.sin(theta) * radius)
         if y1 < y2:
-            my2 = y1 + vel * (np.sin(theta) * radius)
+            my2 = y1 + vmult * vel * (np.sin(theta) * radius)
         if y1 == y2:
             my2 = y2
     
@@ -100,50 +171,6 @@ FA_Y1 = 0.2
 FA_Y2 = 0.8
 
 
-
-# Separation Errors
-# Vessel Separation Error
-min_range = 0.045                                                                         
-max_range = 0.05                                                                         
-midpoint = (max_range + min_range)/2                                                     
-samples = 1000                                                                          
-
-dist1 = np.random.uniform(min_range, max_range, samples)                                 
-print(kurtosis(dist1, fisher=False))
-
-
-exponential_decay = 0.001                                                                
-sigma = 0.01     
-min_range = 0.25                                                                         
-max_range = 0.3                                                                         
-midpoint = (max_range + min_range)/2                                                     
-dist2 = np.random.laplace(midpoint, exponential_decay, samples)                                         
-print(kurtosis(dist2, fisher=False))
-
-
-min_range = 0.09                                                                         
-max_range = 0.1                                                                      
-midpoint = (max_range + min_range)/2                                                     
-dist3 = np.random.laplace(midpoint, exponential_decay, samples)      
-print(kurtosis(dist3, fisher=False))
-
-
-# Standard distance from other vessels without IUU
-def get_e(n=1):
-    return np.random.choice(dist1, n)
-
-
-# Vessel IUU Separate Error
-def get_ie(n=1):
-    return np.random.choice(dist2, n)
-
-
-# Vessel IUU Separate Error if alert
-
-def get_iee(n=1):
-    return np.random.choice(dist3, n)
-
-
 # Define Fishing area
 # x = 0.60, 0.80
 # y = 0.20, 0.80
@@ -153,11 +180,11 @@ farea = list(((x, y) for x in np.linspace(FA_X1, FA_X2, 50) for y in np.linspace
 fxVec = [item[0] for item in farea]
 fyVec = [item[1] for item in farea]
 
-# # Agents
+# # Agents in random space
 # xVec = np.mod(np.random.uniform(0, 1, NAGENTS), 1)
 # yVec = np.mod(np.random.uniform(0, 1, NAGENTS), 1)
 
-# Agents
+# Agents in random fishing area space
 xVec = np.random.choice(fxVec, NAGENTS)
 yVec = np.random.choice(fyVec, NAGENTS)
 
@@ -253,7 +280,7 @@ for t in range(NTIME):
         # If close to IUU Vessel move away
         # if (t >= IUU_EVENT and t <= IUU_EVENT and idist <= ie):
         if (idist <= ie):
-            x2, y2 = vmove(x1, ix1, y1, iy1, inverse_dist=True, vmult=10, random_dir=True) 
+            x2, y2 = vmove(x1, ix1, y1, iy1, inverse_dist=True, vmult=3, random_dir=True) 
             agents.loc[i, 'alert_status'] = "Alert"
 
         # If inside IUU event, far away from iuu, but vessel close to other vessel
