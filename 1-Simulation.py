@@ -6,82 +6,66 @@ import seaborn as sns
 import random
 from math import acos, degrees
 import scipy.stats
-from scipy.stats import norm, kurtosis
-#from sympy.solvers import solve
-#from sympy import Symbol
-#from sympy import Matrix, solve_linear_system
-#from sympy.abc import x, y
-from scipy.optimize import fsolve
 
 
 def dist(x1, x2, y1, y2):
     return ( np.sqrt( (x2 - x1)**2 + (y2 - y1)**2) )
 
 
-# mx2 = x1 + v * (trig)
-# my2 = y1 + v * (trig)
-# Solve for v where dist(x1, mx2, y1, my2)
-def solve_vel(vel, *varss):
-    x1, x2, y1, y2, theta, radius, max_speed = varss
-    # x1 greater than x2
-    if ( (x1 > x2) and (y1 > y2) ):
-        return ( np.sqrt( (x2 - (x1 - (vel * (np.cos(theta) * radius))))**2 + (y2 - (y1 - (vel * (np.sin(theta) * radius))))**2) ) - max_speed
-    if ( (x1 > x2) and (y1 < y2) ):
-        return ( np.sqrt( (x2 - (x1 - (vel * (np.cos(theta) * radius))))**2 + (y2 - (y1 + (vel * (np.sin(theta) * radius))))**2) ) - max_speed
-    if ( (x1 > x2) and (y1 == y2) ):
-        return ( np.sqrt( (x2 - (x1 - (vel * (np.cos(theta) * radius))))**2 + (y2 - y1)**2) ) - max_speed
-    # x1 less than x2
-    if ( (x1 < x2) and (y1 > y2) ):
-        return ( np.sqrt( (x2 - (x1 + (vel * (np.cos(theta) * radius))))**2 + (y2 - (y1 - (vel * (np.sin(theta) * radius))))**2) ) - max_speed
-    if ( (x1 < x2) and (y1 < y2) ):
-        return ( np.sqrt( (x2 - (x1 + (vel * (np.cos(theta) * radius))))**2 + (y2 - (y1 + (vel * (np.sin(theta) * radius))))**2) ) - max_speed    
-    if ( (x1 < x2) and (y1 == y2) ):
-        return ( np.sqrt( (x2 - (x1 + (vel * (np.cos(theta) * radius))))**2 + (y2 - y1)**2) ) - max_speed
-    if ( (x1 == x2) and (y1 > y2) ):
-        return ( np.sqrt( (x2 - x1)**2 + (y2 - (y1 - (vel * (np.sin(theta) * radius))))**2) ) - max_speed
-    if ( (x1 == x2) and (y1 < y2) ):
-       return ( np.sqrt( (x2 - x1)**2 + (y2 - (y1 + (vel * (np.sin(theta) * radius))))**2) ) - max_speed
-    if ( (x1 == x2) and (y1 == y2) ):
-        return vel * 0
 
-       
+# x_c = x_a - (d_2 * (x_a - x_b))  /d
+def solve_dist(x1, x2, y1, y2, max_speed):
+    d = dist(x1, x2, y1, y2)
+    d2 = max_speed
+    x3 = x1 - ( d2 * (x1 - x2)) / (d)
+    y3 = y1 - ( d2 * (y1 - y2)) / (d)
+    return x3, y3
+
    
+#x3, y3 = solve_dist(x1, x2, y1, y2, max_dist = 0.25)
+
+def calc_vmove(x1, x2, y1, y2, inverse_dist=False, random_dir=False, max_speed=0.025):
+    '''
+    Calculate trig angle and return direction
+    inverse_dist: Inverse distance moves away from target
+    vmult: velocity multiplier 
+    '''
+    # Get distance to target
+    #ldist = dist(x1, x2, y1, y2)
+    #vel = ldist/25
+    #print(f"ldist: {ldist} - vel: {vel}")
+    #vel=1
+
+    if random_dir == True:
+        # Update location adjusting for sign (inverse)
+        randx = np.linspace(x2 - .10, x2 + .10, 50)
+        randy = np.linspace(y2 - .10, y2 + .10, 50)
+        x2 = np.random.choice(randx, 1)
+        y2 = np.random.choice(randy, 1)
+
+    # More towards target
+    if inverse_dist == True:
+        if x1 < x2:
+            x2 = x1 - (x2 - x1)
+        if x1 > x2:
+            x2 = x1 + (x1 - x2)
+        if y1 < y2:
+            y2 = y1 - (y2 - y1)
+        if y1 > y2:
+            y2 = y1 + (y2 - y1)
+        if y1 == y2:
+            y1 = y2
+        if x1 == x2:
+            x1 = x2
+
+    # Calculate movement along linear line
+    mx2, my2 = solve_dist(x1, x2, y1, y2, max_speed = max_speed)
+    return mx2, my2
 
 
-def calc_dist_move(x1, x2, y1, y2, theta, radius, vmult, max_speed):
-    # Solve for velocity
-    # varss = (x1, x2, y1, y2, theta, radius, max_speed)
-    vel = fsolve(solve_vel, 0.01, maxfev = 1000000, args = (x1, x2, y1, y2, theta, radius, max_speed))
-    
-    # Calculate new movement
-    mx2 = x1 + vel * (np.cos(theta) * radius)
-    my2 = y1 + vel * (np.cos(theta) * radius)
-    return mx2, my2, vel
-   
-
-def test_vel(x1, x2, y1, y2, theta, radius, max_speed, vel):
-    return ( np.sqrt( (x2 - (x1 + (vel * (np.cos(theta) * radius))))**2 + (y2 - (y1 + (vel * (np.sin(theta) * radius))))**2) ) - max_speed
 
 
-
-nx2, ny2, nvel = calc_dist_move(x1 = 0.50, x2 =0.80, y1 = 0.10, y2 = 0.60, theta = 25, radius = 0.3, vmult = 1, max_speed = 0.25)
-nvel
-x1 = 0.50
-y1 = 0.10
-theta = 25
-radius = 0.3
-max_speed = 0.25
-
-test_vel(x1, nx2, y1, ny2, theta, radius, max_speed, nvel)
-
-
-
-# dist(x1, nx2, y1, ny2)
-
-
-
-
-def vmove(x1, x2, y1, y2, inverse_dist=False, vel=0.00625, random_dir=False, vmult=1):
+def vmove(x1, x2, y1, y2, inverse_dist=False, random_dir=False):
     '''
     Calculate trig angle and return direction
     inverse_dist: Inverse distance moves away from target
@@ -198,8 +182,6 @@ agents = pd.DataFrame({'fishing_status': "Traveling",
                              'fxLoc': random.sample(fxVec, NAGENTS),
                              'fyLoc': random.sample(fyVec, NAGENTS)})
 
-
-
 # Illegal vessel location data
 ivessel = pd.DataFrame({'xLoc': [0.99], 'yLoc': [0.01], 'fxLoc': [0.70], 'fyLoc': [0.30]})
 
@@ -232,7 +214,7 @@ for t in range(NTIME):
     # Introduce IUU Event 
     if t >= IUU_EVENT:
         # Move IUU vessel
-        ix2, iy2 = vmove(ix1, ifx1, iy1, ify1, vel=iuuv)
+        ix2, iy2 = calc_vmove(ix1, ifx1, iy1, ify1, max_speed = 0.025)
         
         # Update vessel
         ivessel['xLoc'][0] = ix2
@@ -244,14 +226,6 @@ for t in range(NTIME):
     
     for i in range(NAGENTS):       
 
-        #e = get_e()[0] 
-        #ie = get_e()[0]
-        #iee = get_e()[0]
-
-        # e = get_e()[0] 
-        # ie = get_ie()[0]
-        # iee = get_iee()[0]
-        
         # Fishing location
         fx1 = agents['fxLoc'][i]
         fy1 = agents['fyLoc'][i]
@@ -280,7 +254,7 @@ for t in range(NTIME):
         # If close to IUU Vessel move away
         # if (t >= IUU_EVENT and t <= IUU_EVENT and idist <= ie):
         if (idist <= ie):
-            x2, y2 = vmove(x1, ix1, y1, iy1, inverse_dist=True, vmult=3, random_dir=True) 
+            x2, y2 = calc_vmove(x1, ix1, y1, iy1, inverse_dist=True, max_speed = 0.025) 
             agents.loc[i, 'alert_status'] = "Alert"
 
         # If inside IUU event, far away from iuu, but vessel close to other vessel
@@ -298,7 +272,7 @@ for t in range(NTIME):
         
         # Otherwise, move towards target fishing area       
         else:
-            x2, y2 = vmove(x1, fx1, y1, fy1)
+            x2, y2 = calc_vmove(x1, fx1, y1, fy1, max_speed = 0.025)
             agents.loc[i, 'alert_status'] = "Fishing"
             
         # Fishing vs Traveling vs Alert status
