@@ -9,7 +9,7 @@ import scipy.stats
 
 
 # Constants
-NAGENTS = 10     # number of agents
+NAGENTS = 100     # number of agents
 NTIME = 720    # number of time steps 24-hours * 30 days
 IUU_EVENT = 312   # Time of illegal event
 #v = 0.0625        # velocity 
@@ -51,8 +51,8 @@ def calc_vmove(x1, x2, y1, y2, inverse_dist=False, random_dir=False, max_speed=0
     '''
     if random_dir == True:
         # Update location adjusting for sign (inverse)
-        randx = np.linspace(x2 - .10, x2 + .10, 50)
-        randy = np.linspace(y2 - .10, y2 + .10, 50)
+        randx = np.linspace(x2 - .20, x2 + .20, 50)
+        randy = np.linspace(y2 - .20, y2 + .20, 50)
         x2 = np.random.choice(randx, 1)
         y2 = np.random.choice(randy, 1)
 
@@ -157,12 +157,12 @@ fxVec = [item[0] for item in farea]
 fyVec = [item[1] for item in farea]
 
 # # Agents in random space
-xVec = np.mod(np.random.uniform(0, 1, NAGENTS), 1)
-yVec = np.mod(np.random.uniform(0, 1, NAGENTS), 1)
+# xVec = np.mod(np.random.uniform(0, 1, NAGENTS), 1)
+# yVec = np.mod(np.random.uniform(0, 1, NAGENTS), 1)
 
 # Agents in random fishing area space
-# xVec = np.random.choice(fxVec, NAGENTS)
-# yVec = np.random.choice(fyVec, NAGENTS)
+xVec = np.random.choice(fxVec, NAGENTS)
+yVec = np.random.choice(fyVec, NAGENTS)
 
 
 
@@ -226,14 +226,16 @@ for t in range(NTIME):
         fx1 = agents['fxLoc'][i]
         fy1 = agents['fyLoc'][i]
                
-        # If at location find new fishing location
+        # If at location fish then find new location
         if (dist(x1, fx1, y1, fy1) <= e):
+            # If vessel has been at fishing site for 10 hours
             if agents.loc[i, 'fishing_time'] == 10:
                 fx1 = random.sample(fxVec, 1)[0]
                 fy1 = random.sample(fyVec, 1)[0]
                 agents.loc[i, 'fxLoc'] = fx1
                 agents.loc[i, 'fyLoc'] = fy1
                 agents.loc[i, 'fishing_time'] = 0
+            # If not, add 1 hour
             else:
                 agents.loc[i, 'fishing_time'] += 1
             
@@ -253,7 +255,7 @@ for t in range(NTIME):
 
         # If close to IUU Vessel move away
         if ( (t >= IUU_EVENT) and (idist < ie) ):
-            x2, y2 = calc_vmove(x1, ix1, y1, iy1, inverse_dist=True, max_speed=ispeed) 
+            x2, y2 = calc_vmove(x1, ix1, y1, iy1, inverse_dist=True, max_speed=ispeed, random_dir=True) 
             agents.loc[i, 'alert_status'] = "Case 1"
         
         # If outside second margin of IUU don't move

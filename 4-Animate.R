@@ -91,12 +91,13 @@ p2 <- ggplot(ksm, aes(t, ks, group=1, color = factor(signal))) +
   labs(x="Hours in Month", y="Anomaly Index (Mean)") +
   theme(legend.position = "none") +
   scale_color_manual(values=c("black", "red")) +
-  transition_manual(frames = t) +
-  transition_reveal(along = t) +
-  enter_fade() +
+  # transition_manual(frames = t) +
+  # transition_reveal(along = t) +
+  # enter_fade() +
   NULL
 p2
 
+# Save object
 ap2 <- animate(p2, nframes = max(dat$t))
 
 
@@ -128,7 +129,7 @@ ksk
 
 ggplot(ksk, aes(t, kurt)) + geom_point() + 
   geom_line() + 
-  geom_smooth() +
+  # geom_smooth() +
   geom_vline(xintercept = 312+24, color='red') +
   geom_vline(xintercept = 312+48, color='red') +
   # geom_hline(yintercept = 0, color='red') +
