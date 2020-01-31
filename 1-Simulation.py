@@ -9,18 +9,16 @@ import scipy.stats
 
 
 # Constants
-NAGENTS = 100     # number of agents
+NAGENTS = 10     # number of agents
 NTIME = 720    # number of time steps 24-hours * 30 days
 IUU_EVENT = 312   # Time of illegal event
-#v = 0.0625        # velocity 
 tspeed = 0.025    # Traveling speed
 ispeed = 0.025    # Speed when close to IUU
 fspeed = 0.0025   # Fishing speed
-#iuuv = 0.0625
+
 
 e = 0.001          # separation error
 ie = 0.25         # IUU separation error
-iee = 0.1         # separation error from other vessels if alert
 FA_X1 = 0.6       # Fishing area coords.
 FA_X2 = 0.8
 FA_Y1 = 0.2
@@ -45,14 +43,14 @@ def solve_dist(x1, x2, y1, y2, max_speed):
     return x3, y3
 
    
-def calc_vmove(x1, x2, y1, y2, inverse_dist=False, random_dir=False, max_speed=0.025):
+def calc_vmove(x1, x2, y1, y2, inverse_dist=False, random_dir=False, rinterval=0.10, max_speed=0.025):
     '''
     info
     '''
     if random_dir == True:
         # Update location adjusting for sign (inverse)
-        randx = np.linspace(x2 - .20, x2 + .20, 50)
-        randy = np.linspace(y2 - .20, y2 + .20, 50)
+        randx = np.linspace(x2 - rinterval, x2 + rinterval, 50)
+        randy = np.linspace(y2 - rinterval, y2 + rinterval, 50)
         x2 = np.random.choice(randx, 1)
         y2 = np.random.choice(randy, 1)
 
