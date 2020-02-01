@@ -69,88 +69,10 @@ def calc_vmove(x1, x2, y1, y2, inverse_dist=False, random_dir=False, rinterval=0
     mx2, my2 = solve_dist(x1, x2, y1, y2, max_speed = max_speed)
     return mx2, my2
 
-
-
-def vmove(x1, x2, y1, y2, inverse_dist=False, random_dir=False):
-    '''
-    Calculate trig angle and return direction
-    inverse_dist: Inverse distance moves away from target
-    vmult: velocity multiplier 
-    '''
-    # Get distance to target
-    #ldist = dist(x1, x2, y1, y2)
-    #vel = ldist/25
-    #print(f"ldist: {ldist} - vel: {vel}")
-    #vel=1
-
-    if random_dir == True:
-        # Update location adjusting for sign (inverse)
-        randx = np.linspace(x2 - .10, x2 + .10, 50)
-        randy = np.linspace(y2 - .10, y2 + .10, 50)
-        x2 = np.random.choice(randx, 1)
-        # y2 = np.random.choice(randy, 1)
-
-    # Calc angle
-    C = dist(x1, x2, y1, y2) 
-    B = dist(x1, x2, y2, y2) 
-    A = dist(x1, x1, y1, y2) 
-    radius = C
-
-    # Get angle at B/C
-    #      0          0 - Location of vessel 
-    #      |\
-    #      | \  
-    #    A |  \ C
-    #      |   \   
-    #      |    \              
-    #      |____*\    * - Angle to calculate
-    #         B
-    theta = np.arccos( (B**2 + C**2 - A**2) / (2*B*C) )
-
-    vel = fsolve(solve_vel, 0.01, args = (x1, x2, y1, y2, theta, radius, 0.00025))
-    # print(vel)
-
-    # More towards target
-    if inverse_dist == False:
-        # Update location adjusting for sign
-        if x1 > x2:
-            mx2 = x1 - vmult * vel * (np.cos(theta) * radius)
-        if x1 < x2:
-            mx2 = x1 + vmult * vel * (np.cos(theta) * radius)
-        if x1 == x2:
-            mx2 = x2
-        if y1 > y2:
-            my2 = y1 - vmult * vel * (np.sin(theta) * radius)
-        if y1 < y2:
-            my2 = y1 + vmult * vel * (np.sin(theta) * radius)
-        if y1 == y2:
-            my2 = y2
-    
-    # Move away from target
-    if inverse_dist == True:
-        # Update location adjusting for sign (inverse)
-        if x1 > x2:
-            mx2 = x1 + vmult * vel * (np.cos(theta) * radius)
-        if x1 < x2:
-            mx2 = x1 - vmult * vel * (np.cos(theta) * radius)
-        if x1 == x2:
-            mx2 = x2
-        if y1 > y2:
-            my2 = y1 + vmult * vel * (np.sin(theta) * radius)
-        if y1 < y2:
-            my2 = y1 - vmult * vel * (np.sin(theta) * radius)
-        if y1 == y2:
-            my2 = y2
-
-    return mx2, my2
-       
-
-# Define Fishing area
-# x = 0.60, 0.80
-# y = 0.20, 0.80
+# Fishing area space
 farea = list(((x, y) for x in np.linspace(FA_X1, FA_X2, 100) for y in np.linspace(FA_Y1, FA_Y2, 100)))
 
-# Fishing Area
+# Fishing Area x and y
 fxVec = [item[0] for item in farea]
 fyVec = [item[1] for item in farea]
 
@@ -166,7 +88,7 @@ yVec = np.random.choice(fyVec, NAGENTS)
 
 # Define all vessels as fishing = 0
 agents = pd.DataFrame({'fishing_status': "Traveling",
-                             'alert_status': "Fishing",
+                             'alert_status': "Not Alert",
                              'fishing_time': 0,
                              'xLoc': xVec,
                              'yLoc': yVec,
@@ -175,7 +97,6 @@ agents = pd.DataFrame({'fishing_status': "Traveling",
 
 # Illegal vessel location data
 ivessel = pd.DataFrame({'xLoc': [0.99], 'yLoc': [0.01], 'fxLoc': [0.70], 'fyLoc': [0.30]})
-
 # -------------------------------------------------------------------
 # Start simulation
 odat = pd.DataFrame()    # Output data frame to store results
@@ -233,6 +154,9 @@ for t in range(NTIME):
                 agents.loc[i, 'fxLoc'] = fx1
                 agents.loc[i, 'fyLoc'] = fy1
                 agents.loc[i, 'fishing_time'] = 0
+                # If returning to fishing spot, change to not alert
+                if agents.loc[i, 'alert_status'] == "After Alert":                
+                    agents.loc[i, 'alert_status'] = "Not Alert"                
             # If not, add 1 hour
             else:
                 agents.loc[i, 'fishing_time'] += 1
@@ -245,79 +169,69 @@ for t in range(NTIME):
         
         # Get distance to IUU Vessel
         idist = round(dist(x1, ix1, y1, iy1), 2)
-        
-        # If closests vessel is within error (e) move away from vessel
-        # if dist_check['dist'].iat[0] <= e:
-        #     x2, y2 = calc_vmove(x1, dx1, y1, dy1, inverse_dist=True, max_speed = tspeed) 
-        #     agents.loc[i, 'alert_status'] = "Case 3"
 
         # If close to IUU Vessel move away
-        if ( (t >= IUU_EVENT) and (idist < ie) ):
-            x2, y2 = calc_vmove(x1, ix1, y1, iy1, inverse_dist=True, max_speed=ispeed, random_dir=True) 
-            agents.loc[i, 'alert_status'] = "Case 1"
+        # if (idist < ie):
+        #     x2, y2 = calc_vmove(x1, ix1, y1, iy1, inverse_dist=True, max_speed = ispeed, random_dir=True) 
+        #     agents.loc[i, 'alert_status'] = "Alert"
+        
+        # # If outside second margin of IUU don't move
+        # if ( (idist >= ie) and (idist <= ie + 0.10) ):
+        #     x2, y2 = calc_vmove(x1, dx1, y1, dy1, inverse_dist=True, max_speed = tspeed, random_dir=True) 
+        #     fx1 = random.sample(fxVec, 1)[0]
+        #     fy1 = random.sample(fyVec, 1)[0]
+        #     agents.loc[i, 'fxLoc'] = fx1
+        #     agents.loc[i, 'fyLoc'] = fy1
+        #     #x2 = x1
+        #     #y2 = y1
+        #     agents.loc[i, 'alert_status'] = "Alert"
+       
+        # # Otherwise, move towards target fishing area at fishing speed      
+        # elif (agents.loc[i, 'fishing_status'] == "Fishing"):
+        #     x2, y2 = calc_vmove(x1, fx1, y1, fy1, max_speed = fspeed)
+        #     agents.loc[i, 'alert_status'] = "Not Alert"
+        
+        # # # Otherwise, move towards target fishing area at travel speed
+        # elif (agents.loc[i, 'fishing_status'] == "Traveling"):
+        #     x2, y2 = calc_vmove(x1, fx1, y1, fy1, max_speed = tspeed)
+        #     agents.loc[i, 'alert_status'] = "Not Alert"
+
+# Old code doesn't work
+#-------------------------------------------------------------------------------
+        # If close to IUU Vessel move away
+        if ( (t >= IUU_EVENT) and  (idist < ie) ):
+            #x1 = (x1 + fx1) / 2
+            #y1 = (y1 + fy1) / 2
+            x2, y2 = calc_vmove(x1, ix1, y1, iy1, inverse_dist=True, max_speed = ispeed) 
+            agents.loc[i, 'alert_status'] = "Alert"
         
         # If outside second margin of IUU don't move
         if ( (t >= IUU_EVENT) and (idist >= ie) and (idist <= ie + 0.20) ):
-            x2, y2 = calc_vmove(x1, dx1, y1, dy1, inverse_dist=True, max_speed = tspeed, random_dir=True) 
+            x2, y2 = calc_vmove(x1, fx1, y1, fy1, inverse_dist=True, max_speed = tspeed) 
             #x2 = x1
             #y2 = y1
-            agents.loc[i, 'alert_status'] = "Case 2"
-       
+            #fx1 = random.sample(fxVec, 1)[0]
+            #fy1 = random.sample(fyVec, 1)[0]
+            #agents.loc[i, 'fxLoc'] = fx1
+            #agents.loc[i, 'fyLoc'] = fy1
+            #agents.loc[i, 'alert_status'] = "After Alert"
+        
+        # elif ( (agents.loc[i, 'fishing_status'] == "Fishing") and (agents.loc[i, 'alert_status'] == "After Alert") ):
+        #     x2, y2 = calc_vmove(x1, fx1, y1, fy1, max_speed = tspeed)  
+
+        # elif ( (agents.loc[i, 'fishing_status'] == "Traveling") and (agents.loc[i, 'alert_status'] == "After Alert") ):
+        #     x2, y2 = calc_vmove(x1, fx1, y1, fy1, max_speed = tspeed)  
+
         # Otherwise, move towards target fishing area at fishing speed      
-        elif (agents.loc[i, 'fishing_status'] == "Fishing"):
-            x2, y2 = calc_vmove(x1, fx1, y1, fy1, max_speed = fspeed)
-            agents.loc[i, 'alert_status'] = "Case 4"
+        elif ( (agents.loc[i, 'fishing_status'] == "Fishing") and (agents.loc[i, 'alert_status'] == "Not Alert") ):
+            x2, y2 = calc_vmove(x1, fx1, y1, fy1, max_speed = fspeed)            
         
-        # # Otherwise, move towards target fishing area at travel speed
-        elif (agents.loc[i, 'fishing_status'] == "Traveling"):
+        # Otherwise, move towards target fishing area at travel speed
+        elif ( (agents.loc[i, 'fishing_status'] == "Traveling") and (agents.loc[i, 'alert_status'] == "Not Alert") ):
             x2, y2 = calc_vmove(x1, fx1, y1, fy1, max_speed = tspeed)
-            agents.loc[i, 'alert_status'] = "Case 5"
-        # else:
-        #     agents.loc[i, 'alert_status'] = "Case 5"
 
+        #-------------------------------------------------------------------------------            
 
-        # # Separation:
-        # if dist_check['dist'].iat[0] <= e:
-        #     x2, y2 = calc_vmove(x1, dx1, y1, dy1, inverse_dist=True, max_speed = tspeed) 
-
-        # # If close to IUU Vessel move away
-        # elif ( (idist <= ie) and (t >= IUU_EVENT) ):
-        #     x2, y2 = calc_vmove(x1, ix1, y1, iy1, inverse_dist=True, max_speed = ispeed) 
-        #     agents.loc[i, 'alert_status'] = "Alert"
-
-        # # If inside IUU event, far away from iuu, but within ie + 0.20 range
-        # elif ( (t > IUU_EVENT) and (t <= (IUU_EVENT + 48)) and (idist > ie + .20)  ):
-        #     x2, y2 = calc_vmove(x1, fx1, y1, fy1, max_speed = tspeed) 
-        
-        # else: 
-        #     x2, y2 = calc_vmove(x1, fx1, y1, fy1, max_speed = tspeed)
-
-        # If outside second margin of IUU, not close to vessels don't move
-        # elif ( (t > IUU_EVENT) and (t <= (IUU_EVENT + 48)) and (idist >= ie) and (idist < ie + 0.20) ):
-        #     x2 = x1
-        #     y2 = y1
-        
-        # If closests vessel is within error (e) move away from vessel
-        # Otherwise, move towards target fishing area       
-        #elif ( (agents.loc[i, 'fishing_status'] == 'Fishing') and (agents.loc[i, 'alert_status'] != 'Alert')):
-        #    x2, y2 = calc_vmove(x1, fx1, y1, fy1, max_speed = fspeed)
-        #    agents.loc[i, 'fishing_status'] = "Fishing"
-        #    agents.loc[i, 'alert_status'] = "Not Alert"
-        
-        # elif ( (agents.loc[i, 'fishing_status'] == 'Fishing') and (agents.loc[i, 'alert_status'] == 'Alert')):
-        #     x2, y2 = calc_vmove(x1, ix1, y1, iy1, inverse_dist=True,  max_speed = ispeed)
-        #     agents.loc[i, 'fishing_status'] = "Fishing"
-        #     agents.loc[i, 'alert_status'] = "Alert"
-
-        # elif ( (agents.loc[i, 'fishing_status'] == 'Traveling') and (agents.loc[i, 'alert_status'] != 'Alert')):
-        #     x2, y2 = calc_vmove(x1, fx1, y1, fy1, max_speed = tspeed)
-        #     agents.loc[i, 'fishing_status'] = "Traveling"
-        #     agents.loc[i, 'alert_status'] = "Not Alert"
-
-        # elif ( (agents.loc[i, 'fishing_status'] == 'Traveling') and (agents.loc[i, 'alert_status'] == 'Alert')):
-        #     x2, y2 = calc_vmove(x1, ix1, y1, iy1, inverse_dist=True, max_speed = ispeed)
-        #     agents.loc[i, 'fishing_status'] = "Traveling"
-        #     agents.loc[i, 'alert_status'] = "Alert"
         # Fishing vs Traveling vs Alert status
         if (x2 >= FA_X1 and x2 <= FA_X2 and y2 >= FA_Y1 and y2 <= FA_Y2):
            agents.loc[i, 'fishing_status'] = "Fishing"
