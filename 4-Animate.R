@@ -10,7 +10,7 @@ library(magick)
 
 setwd("~/Projects/abm_IUU_simulation/")
 
-dat = read_feather("~/Projects/abm_IUU_simulation/data/vessel_dat.feather")
+dat = read_feather("~/Projects/abm_IUU_simulation/data/v0.50/vessel_dat.feather")
 head(dat)
 
 # sum: 10886.89
@@ -18,7 +18,7 @@ head(dat)
 sum(dat$x1)
 sd(dat$x1)
 
-idat = read_feather("~/Projects/abm_IUU_simulation/data/iuu_vessel_dat.feather")
+idat = read_feather("~/Projects/abm_IUU_simulation/data/v0.50/iuu_vessel_dat.feather")
 head(idat)
 tail(idat)
 
@@ -58,7 +58,7 @@ p1 <- ggplot(dat, aes(x1, y1)) +
         legend.margin=margin(t=0, unit='cm')) +
   labs(title = 'Hour of Month: {current_frame} \nHour of IUU Event: 313') +
   NULL
-p1
+
 # p1
 
 # animate(p, nframes = 100)
@@ -70,7 +70,7 @@ ap1 <- animate(p1, nframes = max(dat$t))
 
 
 # KS-Statistic
-ksdat = read_feather("~/Projects/abm_IUU_simulation/data/ks_data.feather")
+ksdat = read_feather("~/Projects/abm_IUU_simulation/data/v0.50/ks_data.feather")
 
 
 # Mean results
@@ -95,11 +95,11 @@ p2 <- ggplot(ksm, aes(t, ks, group=1, color = factor(signal))) +
   labs(x="Hours in Month", y="Anomaly Index (Mean)") +
   theme(legend.position = "none") +
   scale_color_manual(values=c("black", "red")) +
-  # transition_manual(frames = t) +
-  # transition_reveal(along = t) +
-  # enter_fade() +
+  transition_manual(frames = t) +
+  transition_reveal(along = t) +
+  enter_fade() +
   NULL
-p2
+# p2
 
 # Save object
 ap2 <- animate(p2, nframes = max(dat$t))
@@ -112,7 +112,7 @@ ksk <- ksdat %>%
   summarise(kurt = kurtosis(ks))
 ksk
 
-qt95 = quantile(ksk$kurt, c(.95))
+qt95 = quantile(ksk$kurt, c(.95), na.rm = TRUE)
 ksk$signal = ifelse(ksk$kurt >= qt95, 1, 0)
 
 ksk
@@ -126,11 +126,11 @@ p3 <- ggplot(ksk, aes(t, kurt, group=1, color = factor(signal))) +
   labs(x="Hours in Month", y="Anomaly Index (Kurtosis)") +
   theme(legend.position = "none") +
   scale_color_manual(values=c("black", "red")) +
-  # transition_manual(frames = t) +
-  # transition_reveal(along = t) +
-  # enter_fade() +
+  transition_manual(frames = t) +
+  transition_reveal(along = t) +
+  enter_fade() +
   NULL
-p3
+# p3
 
 
 ap3 <- animate(p3, nframes = max(dat$t))
@@ -153,7 +153,7 @@ for(i in 2:max(dat$t)){
 print("Saving Plot")
 
 # Save animation
-anim_save("~/Projects/abm_IUU_simulation/figures/abm_iuu_simulation_2.gif", new_gif)
+anim_save("~/Projects/abm_IUU_simulation/figures/abm_iuu_simulation_v0.50.gif", new_gif)
 
 
 

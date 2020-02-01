@@ -7,6 +7,15 @@ import random
 from math import acos, degrees
 import scipy.stats
 
+# Todo
+# (1) Allow different speeds for fishing vs alert  (Done)
+# (2) Separation to prevent collisions   (DONE)
+# (3) Alert vessels move away from illegal vessel (DONE)
+# (4) Change color based on status (DONE)
+# (4) Add 99% percentile alert signal min and max (DONE)
+# (6) In figures add hour of IUU in the title (DONE)
+# (7) Random movement when IUU event occurs (Done)
+
 
 # Constants
 NAGENTS = 10     # number of agents
@@ -171,66 +180,30 @@ for t in range(NTIME):
         idist = round(dist(x1, ix1, y1, iy1), 2)
 
         # If close to IUU Vessel move away
-        # if (idist < ie):
-        #     x2, y2 = calc_vmove(x1, ix1, y1, iy1, inverse_dist=True, max_speed = ispeed, random_dir=True) 
-        #     agents.loc[i, 'alert_status'] = "Alert"
-        
-        # # If outside second margin of IUU don't move
-        # if ( (idist >= ie) and (idist <= ie + 0.10) ):
-        #     x2, y2 = calc_vmove(x1, dx1, y1, dy1, inverse_dist=True, max_speed = tspeed, random_dir=True) 
-        #     fx1 = random.sample(fxVec, 1)[0]
-        #     fy1 = random.sample(fyVec, 1)[0]
-        #     agents.loc[i, 'fxLoc'] = fx1
-        #     agents.loc[i, 'fyLoc'] = fy1
-        #     #x2 = x1
-        #     #y2 = y1
-        #     agents.loc[i, 'alert_status'] = "Alert"
-       
-        # # Otherwise, move towards target fishing area at fishing speed      
-        # elif (agents.loc[i, 'fishing_status'] == "Fishing"):
-        #     x2, y2 = calc_vmove(x1, fx1, y1, fy1, max_speed = fspeed)
-        #     agents.loc[i, 'alert_status'] = "Not Alert"
-        
-        # # # Otherwise, move towards target fishing area at travel speed
-        # elif (agents.loc[i, 'fishing_status'] == "Traveling"):
-        #     x2, y2 = calc_vmove(x1, fx1, y1, fy1, max_speed = tspeed)
-        #     agents.loc[i, 'alert_status'] = "Not Alert"
-
-# Old code doesn't work
-#-------------------------------------------------------------------------------
-        # If close to IUU Vessel move away
-        if ( (t >= IUU_EVENT) and  (idist < ie) ):
-            #x1 = (x1 + fx1) / 2
-            #y1 = (y1 + fy1) / 2
-            x2, y2 = calc_vmove(x1, ix1, y1, iy1, inverse_dist=True, max_speed = ispeed) 
+        if (idist < ie):
+            x2, y2 = calc_vmove(x1, ix1, y1, iy1, inverse_dist=True, max_speed = ispeed, random_dir=True) 
             agents.loc[i, 'alert_status'] = "Alert"
         
         # If outside second margin of IUU don't move
-        if ( (t >= IUU_EVENT) and (idist >= ie) and (idist <= ie + 0.20) ):
-            x2, y2 = calc_vmove(x1, fx1, y1, fy1, inverse_dist=True, max_speed = tspeed) 
+        if ( (idist >= ie) and (idist <= ie + 0.10) ):
+            x2, y2 = calc_vmove(x1, dx1, y1, dy1, inverse_dist=True, max_speed = tspeed, random_dir=True) 
+            fx1 = random.sample(fxVec, 1)[0]
+            fy1 = random.sample(fyVec, 1)[0]
+            agents.loc[i, 'fxLoc'] = fx1
+            agents.loc[i, 'fyLoc'] = fy1
             #x2 = x1
             #y2 = y1
-            #fx1 = random.sample(fxVec, 1)[0]
-            #fy1 = random.sample(fyVec, 1)[0]
-            #agents.loc[i, 'fxLoc'] = fx1
-            #agents.loc[i, 'fyLoc'] = fy1
-            #agents.loc[i, 'alert_status'] = "After Alert"
-        
-        # elif ( (agents.loc[i, 'fishing_status'] == "Fishing") and (agents.loc[i, 'alert_status'] == "After Alert") ):
-        #     x2, y2 = calc_vmove(x1, fx1, y1, fy1, max_speed = tspeed)  
-
-        # elif ( (agents.loc[i, 'fishing_status'] == "Traveling") and (agents.loc[i, 'alert_status'] == "After Alert") ):
-        #     x2, y2 = calc_vmove(x1, fx1, y1, fy1, max_speed = tspeed)  
-
+            agents.loc[i, 'alert_status'] = "Alert"
+       
         # Otherwise, move towards target fishing area at fishing speed      
-        elif ( (agents.loc[i, 'fishing_status'] == "Fishing") and (agents.loc[i, 'alert_status'] == "Not Alert") ):
-            x2, y2 = calc_vmove(x1, fx1, y1, fy1, max_speed = fspeed)            
+        elif (agents.loc[i, 'fishing_status'] == "Fishing"):
+            x2, y2 = calc_vmove(x1, fx1, y1, fy1, max_speed = fspeed)
+            agents.loc[i, 'alert_status'] = "Not Alert"
         
-        # Otherwise, move towards target fishing area at travel speed
-        elif ( (agents.loc[i, 'fishing_status'] == "Traveling") and (agents.loc[i, 'alert_status'] == "Not Alert") ):
+        # # Otherwise, move towards target fishing area at travel speed
+        elif (agents.loc[i, 'fishing_status'] == "Traveling"):
             x2, y2 = calc_vmove(x1, fx1, y1, fy1, max_speed = tspeed)
-
-        #-------------------------------------------------------------------------------            
+            agents.loc[i, 'alert_status'] = "Not Alert"
 
         # Fishing vs Traveling vs Alert status
         if (x2 >= FA_X1 and x2 <= FA_X2 and y2 >= FA_Y1 and y2 <= FA_Y2):
@@ -264,16 +237,5 @@ idat.to_feather('data/iuu_vessel_dat.feather')
 
 
 
-# Todo
-# (1) Allow different speeds for fishing vs alert 
-# (2) Separation to prevent collisions   (DONE)
-# (3) Alert vessels move away from illegal vessel (DONE)
-# (4) Change color based on status (DONE)
-# (4) Add 99% percentile alert signal min and max (DONE)
-# (6) In figures add hour of IUU in the title (DONE)
-# (7) Random movement when IUU event occurs (In progress)
-
-# Sensitivity Analysis
-# Change sensitivity of ie
 
 
