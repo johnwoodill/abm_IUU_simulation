@@ -40,7 +40,7 @@ p1 <- ggplot(pdat1, aes(x1, y1)) +
   geom_point(data=ipdat1, color="red") +
   # geom_point(aes(x1, y1, color=factor(alert_status))) +
   geom_point(aes(x1, y1, color=factor(fishing_status)), shape=2) +
-  annotate("text", x= .7, y= .85, label="Fishing Area", color='black') +
+  annotate("text", x= .7, y= .25, label="Fishing Area", color='black') +
   geom_segment(aes(x=0.60, xend=0.8, y=0.2, yend=0.20), color='grey', linetype="dashed") +
   geom_segment(aes(x=0.60, xend=0.8, y=0.8, yend=0.80), color='grey', linetype="dashed") +
   geom_segment(aes(x=0.60, xend=0.6, y=0.2, yend=0.80), color='grey', linetype="dashed") +
@@ -84,7 +84,7 @@ p2 <- ggplot(pdat2, aes(x1, y1)) +
   geom_point(data=ipdat2, color="red") +
     # geom_point(aes(x1, y1, color=factor(alert_status))) +
   geom_point(aes(x1, y1, color=factor(fishing_status)), shape=2) +
-  annotate("text", x= .7, y= .85, label="Fishing Area", color='black') +
+  annotate("text", x= .7, y= .25, label="Fishing Area", color='black') +
   geom_segment(aes(x=0.60, xend=0.8, y=0.2, yend=0.20), color='grey', linetype="dashed") +
   geom_segment(aes(x=0.60, xend=0.8, y=0.8, yend=0.80), color='grey', linetype="dashed") +
   geom_segment(aes(x=0.60, xend=0.6, y=0.2, yend=0.80), color='grey', linetype="dashed") +
@@ -135,7 +135,7 @@ p3 <- ggplot(ksm, aes(t, ks, group=1, color = factor(signal))) +
   # geom_point() +
   geom_line() +
   theme_bw() +
-  labs(x="Hours in Month", y="Anomaly Index (Mean)") +
+  labs(x="Hour in Month", y="Anomaly Index (Mean)") +
   theme(legend.position = "none") +
   scale_color_manual(values=c("black", "red")) +
   NULL
@@ -159,7 +159,7 @@ p4 <- ggplot(ksk, aes(t, kurt, group=1, color = factor(signal))) +
   # geom_point() +
   geom_line() +
   theme_bw() +
-  labs(x="Hours in Month", y="Anomaly Index (Kurtosis)") +
+  labs(x="Hour in Month", y="Anomaly Index (Kurtosis)") +
   theme(legend.position = "none") +
   scale_color_manual(values=c("black", "red")) +
   NULL
