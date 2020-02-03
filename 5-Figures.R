@@ -35,7 +35,8 @@ print("Creating Plot 1")
 
 p1 <- ggplot(pdat1, aes(x1, y1)) +
   labs(y="Latitude", x="Longitude") +
-  theme_bw() +
+  # theme_bw() +
+  theme_tufte(12) +
   geom_point(shape=2) +
   geom_point(data=ipdat1, color="red") +
   # geom_point(aes(x1, y1, color=factor(alert_status))) +
@@ -60,6 +61,7 @@ p1 <- ggplot(pdat1, aes(x1, y1)) +
     #axis.ticks.y=element_blank(),
     legend.title = element_blank(), 
     legend.position = "none",
+    panel.border = element_rect(colour = "grey", fill=NA, size=1),
     # legend.position = c(.5, .025),
     legend.direction = "horizontal", 
     legend.margin=margin(t=0, unit='cm')) +
@@ -79,7 +81,7 @@ print("Creating Plot 1")
 
 p2 <- ggplot(pdat2, aes(x1, y1)) +
   labs(y="Latitude", x="Longitude") +
-  theme_bw() +
+  theme_tufte(12) +
   geom_point(shape=2) +
   geom_point(data=ipdat2, color="red", shape=1, size=3.5) +
   geom_point(data=ipdat2, color="red") +
@@ -106,6 +108,7 @@ p2 <- ggplot(pdat2, aes(x1, y1)) +
     legend.title = element_blank(), 
     legend.position = "none",
     # legend.position = c(.5, .025),
+    panel.border = element_rect(colour = "grey", fill=NA, size=1),
     legend.direction = "horizontal", 
     legend.margin=margin(t=0, unit='cm')) +
   # labs(title = 'Hour of Month: {current_frame} \nHour of IUU Event: 313') +
@@ -136,9 +139,10 @@ print("Creating Plot 2")
 p3 <- ggplot(ksm, aes(t, ks, group=1, color = factor(signal))) +
   # geom_point() +
   geom_line() +
-  theme_bw() +
+  theme_tufte(12) +
   labs(x="Hour in Month", y="Anomaly Index (Mean)") +
-  theme(legend.position = "none") +
+  theme(legend.position = "none",
+        panel.border = element_rect(colour = "grey", fill=NA, size=1)) +
   scale_color_manual(values=c("black", "red")) +
   NULL
 p3
@@ -160,9 +164,10 @@ print("Creating Plot 3")
 p4 <- ggplot(ksk, aes(t, kurt, group=1, color = factor(signal))) + 
   # geom_point() +
   geom_line() +
-  theme_bw() +
+  theme_tufte(12) +
   labs(x="Hour in Month", y="Anomaly Index (Kurtosis)") +
-  theme(legend.position = "none") +
+  theme(legend.position = "none",
+        panel.border = element_rect(colour = "grey", fill=NA, size=1)) +
   scale_color_manual(values=c("black", "red")) +
   NULL
 p4
