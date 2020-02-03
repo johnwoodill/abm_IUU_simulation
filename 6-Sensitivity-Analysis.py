@@ -1,14 +1,12 @@
 import numpy as np
 import numpy.matlib
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 import random
 from math import acos, degrees
 import scipy.stats
 from scipy import stats
 from scipy.stats import kurtosis
-
+import multiprocessing
 
 
 # Todo
@@ -98,6 +96,26 @@ def dist_mat(ndat):
     distMatrix = pd.DataFrame(d).pivot(index=0, columns=1, values=2)
     distMatrix['t'] = t
     return distMatrix  
+
+
+def kurt(x):
+    n = len(x)
+    kk = n * np.sum( (x - np.mean(x))**4 )/(np.sum( (x - np.mean(x))**2 )**2)
+    return kk
+
+#test = pd.DataFrame({'x': [np.nan, np.nan, 1, 3, 4, 6, 8]})
+
+
+def ster(x, stat):
+    n = len(x)
+    if stat == "kurtosis" and n >= 4:
+        # S.E. of Skewness
+        ses = np.sqrt( (6*n*(n - 1) ) / ( (n-2)*(n + 1)*(n + 3) ) )
+        sek = 2 * ses * np.sqrt( (n**2 - 1) / ( (n - 3) * (n + 5) ) )
+        return sek
+    if stat == "mean":
+        return ( (np.std(x)) / (np.sqrt(n)) )
+
 
 
 # Step 1
@@ -278,15 +296,16 @@ def calc_dist(dat):
     
 
 # Step 3
-def calc_ks(idat):
+def calc_ks(idat, ddat):
     i = idat['t'].iat[0]
-    if i == 0:
+    # print(i)
+    if i == 0 or i == 1:
         return None
     h1 = idat
     h1 = h1.drop(columns='t')
     keep = np.triu(np.ones(h1.shape)).astype('bool').reshape(h1.size)
     rvs1 = h1.stack()[keep].values
-    h2 = dat[(dat.t < i ) & (dat.t >= i - 25*8)]
+    h2 = ddat[(ddat.t < i ) & (ddat.t >= i - 25*8)]
     retdat = pd.DataFrame()
     for j in range(max(h2.t), min(h2.t), - 1):
         # Filter last hour
@@ -302,10 +321,13 @@ def calc_ks(idat):
         retdat = pd.concat([retdat, indat])
     return retdat
 
+
 # Step 4
 def calc_anom_det(dat):
+    #se_ks_mean = dat.groupby('t')['ks'].apply(lambda x: ster(x, stat="mean"))
+    #se_ks_kurt = dat.groupby('t')['ks'].apply(lambda x: ster(x, stat="kurtosis"))
     ks_mean = dat.groupby('t')['ks'].mean().reset_index()
-    ks_kurt = dat.groupby('t')['ks'].apply(lambda x: kurtosis(x))
+    ks_kurt = dat.groupby('t')['ks'].apply(lambda x: kurt(x))
     mean_95 = ks_mean.ks.quantile(q=0.95)
     kurt_95 = ks_kurt.quantile(q=0.95)
     outdat = pd.DataFrame({'mean_95': [mean_95], 'kurt_95': [kurt_95]})
@@ -314,34 +336,58 @@ def calc_anom_det(dat):
 
 
 # For loop for parallel
+def main(perms_):
+    try:
+        NAGENTS = perms_[0]
+        sep_ie = round(perms_[1], 2)
 
-# Step 1: Calculate ABM
-abm_dat = abm(NAGENTS = 10, sep_ie=0.25)
+        # Step 1: Calculate ABM
+        # print("Running Agent-based Model")
+        abm_dat = abm(NAGENTS = NAGENTS, sep_ie=sep_ie)
 
-# Step 2: Calculate Distance Matrix
-ddat = calc_dist(abm_dat)
+        # print("Calculating Distance Matrix")
+        # Step 2: Calculate Distance Matrix
+        ddat = calc_dist(abm_dat)
 
-# Step 3: Calculate JS
-js_dat = ddat.groupby('t', as_index=False).progress_apply(lambda x: anom_det(x))
+        # print("Calculate JS Statistics")
+        # Step 3: Calculate JS
+        #global ddat
+        
+        js_dat = ddat.groupby('t', as_index=False).apply(lambda x: calc_ks(x, ddat))
 
-# Step 4: Calculate mean and kurtosis
-mk_dat = calc_anom_det(js_dat)
+        # print("Calculate mean and kurtosis of JS")
+        # Step 4: Calculate mean and kurtosis
+        mk_dat = calc_anom_det(js_dat)
 
-# Build data frame to store data with
-odat = pd.DataFrame({'nagents': [NAGENTS], 'sep_ie': [sep_ie], 'ks_mean': ks_dat.mean_95, 'ks_kurt', ks_dat.kurt_95})
+        print(f"Saving data: data/sens/v{NAGENTS}-ie{sep_ie}.csv")
+        # Build data frame to store data with
+        odat = pd.DataFrame({'nagents': [NAGENTS], 'sep_ie': [sep_ie], 'ks_mean': mk_dat.mean_95, 'ks_kurt': mk_dat.kurt_95})
 
-# Save data
-odat = odat.reset_index(drop=True)
-odat.to_feather(f"data/sens/v{NAGENTS}-ie{}sep_ie.feather')
+        # Save data
+        odat = odat.reset_index(drop=True)
+        odat.to_csv(f"data/sens/v{NAGENTS}-ie{sep_ie}.csv")
+        return 0
+    except:
+        return 1
+        
+
+
+
+#main(10, 0.25)
+#tdat = pd.read_feather('data/v0.50/ks_data.feather')
+#tdat
+
+#mk_dat = calc_anom_det(tdat)
+#mk_dat
+
+perms = [(x, y) for x in range(2, 100, 1) for y in (np.linspace(0, 100, 100)/100)]
 
 
 #-----------------------------------------
 # Parallel loop
-    if parallel == True:
-        #results = ray.get([processGFW.remote(i) for i in folders])
-        pool = multiprocessing.Pool(ncores, maxtasksperchild=1)         
-        pool.map(processGFW, folders)
-        pool.close()
-    else:
-        for folder in folders:
-            ndat = processGFW(folder)
+ncores = 50
+pool = multiprocessing.Pool(ncores, maxtasksperchild=1)         
+pool.map(main, perms)
+pool.close()
+
+

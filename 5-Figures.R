@@ -45,6 +45,7 @@ p1 <- ggplot(pdat1, aes(x1, y1)) +
   geom_segment(aes(x=0.60, xend=0.8, y=0.8, yend=0.80), color='grey', linetype="dashed") +
   geom_segment(aes(x=0.60, xend=0.6, y=0.2, yend=0.80), color='grey', linetype="dashed") +
   geom_segment(aes(x=0.80, xend=0.8, y=0.2, yend=0.80), color='grey', linetype="dashed") +
+  annotate("text", x= .46, y= 1.321, label="Normal", color='black') +
   scale_color_manual(values=c("black", "red")) +
   # transition_manual(frames = t) +
   # ylim(-5, 5) +
@@ -52,11 +53,11 @@ p1 <- ggplot(pdat1, aes(x1, y1)) +
   ylim(min(dat$y1) - 0.10, max(dat$y1) + 0.10) +
   xlim(min(dat$x1) - 0.10, max(dat$x1) + 0.10) +
   theme(#axis.title.x=element_blank(),
-    axis.text.x=element_blank(),
-    axis.ticks.x=element_blank(),
+    #axis.text.x=element_blank(),
+    #axis.ticks.x=element_blank(),
     #axis.title.y=element_blank(),
-    axis.text.y=element_blank(),
-    axis.ticks.y=element_blank(),
+    #axis.text.y=element_blank(),
+    #axis.ticks.y=element_blank(),
     legend.title = element_blank(), 
     legend.position = "none",
     # legend.position = c(.5, .025),
@@ -89,6 +90,7 @@ p2 <- ggplot(pdat2, aes(x1, y1)) +
   geom_segment(aes(x=0.60, xend=0.8, y=0.8, yend=0.80), color='grey', linetype="dashed") +
   geom_segment(aes(x=0.60, xend=0.6, y=0.2, yend=0.80), color='grey', linetype="dashed") +
   geom_segment(aes(x=0.80, xend=0.8, y=0.2, yend=0.80), color='grey', linetype="dashed") +
+  annotate("text", x= .47, y= 1.321, label="IUU Event", color='black') +
   scale_color_manual(values=c("black", "red")) +
   # transition_manual(frames = t) +
   # ylim(-5, 5) +
