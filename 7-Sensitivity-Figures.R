@@ -24,6 +24,14 @@ files <- list.files("~/Projects/abm_IUU_simulation/data/sens", full.names = TRUE
 bdat <- rbindlist(lapply(files, read_csv))
 bdat <- as.data.frame(bdat)
 
+bdat <- filter(bdat, sep_ie <= 0.50)
+# bdat$ks_mean_delta <- bdat$ks_mean/(mean(bdat$ks_mean))
+# bdat$ks_kurt_delta <- bdat$ks_kurt/(mean(bdat$ks_kurt))
+
+# bdat$ks_mean <- bdat$ks_mean_delta
+# bdat$ks_kurt <- bdat$ks_kurt_delta
+
+
 pdat1 <- bdat %>% 
   group_by(nagents) %>% 
   summarise(mean_se = ster(ks_mean, "mean"),

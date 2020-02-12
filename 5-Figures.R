@@ -83,9 +83,10 @@ p2 <- ggplot(pdat2, aes(x1, y1)) +
   labs(y="Latitude", x="Longitude") +
   theme_tufte(12) +
   geom_point(shape=2) +
+  # geom_point(data=ipdat2, color="red2", shape=16, size=20, alpha=0.25) + # Shaded region IUU 
   geom_point(data=ipdat2, color="red", shape=1, size=3.5) +
   geom_point(data=ipdat2, color="red") +
-    # geom_point(aes(x1, y1, color=factor(alert_status))) +
+  # geom_point(aes(x1, y1, color=factor(alert_status))) +
   geom_point(aes(x1, y1, color=factor(fishing_status)), shape=2) +
   annotate("text", x= .7, y= .25, label="Fishing Area", color='black') +
   geom_segment(aes(x=0.60, xend=0.8, y=0.2, yend=0.20), color='grey', linetype="dashed") +
@@ -94,17 +95,25 @@ p2 <- ggplot(pdat2, aes(x1, y1)) +
   geom_segment(aes(x=0.80, xend=0.8, y=0.2, yend=0.80), color='grey', linetype="dashed") +
   annotate("text", x= .47, y= 1.321, label="IUU Event", color='black') +
   scale_color_manual(values=c("black", "red")) +
+  # geom_segment(aes(x = 0.7715, y = 0.6, xend = 0.7715, yend = 0.67),
+              # color='red', size=.75, arrow = arrow(length = unit(0.15, "cm"))) +
+  # geom_segment(aes(x = 0.7625, y = 0.58, xend = 0.745, yend = 0.635),
+              # color='red', size=.75, arrow = arrow(length = unit(0.15, "cm"))) +
+  # geom_segment(aes(x = 0.76, y = 0.5575, xend = 0.735, yend = 0.5575),
+              # color='red', size=.75, arrow = arrow(length = unit(0.15, "cm"))) +
+  # geom_segment(aes(x = 0.50, y = 0.35, xend = 0.5, yend = 0.45),
+              # color='red', size=.75, arrow = arrow(length = unit(0.15, "cm"))) +
   # transition_manual(frames = t) +
   # ylim(-5, 5) +
   # xlim(-5, 5) +
   ylim(min(dat$y1) - 0.10, max(dat$y1) + 0.10) +
   xlim(min(dat$x1) - 0.10, max(dat$x1) + 0.10) +
   theme(#axis.title.x=element_blank(),
-    axis.text.x=element_blank(),
-    axis.ticks.x=element_blank(),
+    #axis.text.x=element_blank(),
+    #axis.ticks.x=element_blank(),
     #axis.title.y=element_blank(),
-    axis.text.y=element_blank(),
-    axis.ticks.y=element_blank(),
+    #axis.text.y=element_blank(),
+    #axis.ticks.y=element_blank(),
     legend.title = element_blank(), 
     legend.position = "none",
     # legend.position = c(.5, .025),
@@ -115,6 +124,10 @@ p2 <- ggplot(pdat2, aes(x1, y1)) +
   NULL
 p2
 
+
+plot_grid(p1, p2, p3, p4, ncol=2, labels = c("A", "B", "C", "D"))
+
+ggsave('figures/abm_sim.png', width=12, height = 8)
 
 
 # KS-Statistic
