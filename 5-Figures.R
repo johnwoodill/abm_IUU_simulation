@@ -53,12 +53,13 @@ p1 <- ggplot(pdat1, aes(x1, y1)) +
   # xlim(-5, 5) +
   ylim(min(dat$y1) - 0.10, max(dat$y1) + 0.10) +
   xlim(min(dat$x1) - 0.10, max(dat$x1) + 0.10) +
-  theme(#axis.title.x=element_blank(),
-    #axis.text.x=element_blank(),
-    #axis.ticks.x=element_blank(),
+  theme(
+    #axis.title.x=element_blank(),
+    axis.text.x=element_blank(),
+    axis.ticks.x=element_blank(),
     #axis.title.y=element_blank(),
-    #axis.text.y=element_blank(),
-    #axis.ticks.y=element_blank(),
+    axis.text.y=element_blank(),
+    axis.ticks.y=element_blank(),
     legend.title = element_blank(), 
     legend.position = "none",
     panel.border = element_rect(colour = "grey", fill=NA, size=1),
@@ -69,6 +70,7 @@ p1 <- ggplot(pdat1, aes(x1, y1)) +
   NULL
 p1
 
+364
 
 tt = 364
 
@@ -108,12 +110,13 @@ p2 <- ggplot(pdat2, aes(x1, y1)) +
   # xlim(-5, 5) +
   ylim(min(dat$y1) - 0.10, max(dat$y1) + 0.10) +
   xlim(min(dat$x1) - 0.10, max(dat$x1) + 0.10) +
-  theme(#axis.title.x=element_blank(),
-    #axis.text.x=element_blank(),
-    #axis.ticks.x=element_blank(),
+  theme(
+    #axis.title.x=element_blank(),
+    axis.text.x=element_blank(),
+    axis.ticks.x=element_blank(),
     #axis.title.y=element_blank(),
-    #axis.text.y=element_blank(),
-    #axis.ticks.y=element_blank(),
+    axis.text.y=element_blank(),
+    axis.ticks.y=element_blank(),
     legend.title = element_blank(), 
     legend.position = "none",
     # legend.position = c(.5, .025),
@@ -125,9 +128,9 @@ p2 <- ggplot(pdat2, aes(x1, y1)) +
 p2
 
 
-plot_grid(p1, p2, p3, p4, ncol=2, labels = c("A", "B", "C", "D"))
+# plot_grid(p1, p2, p3, p4, ncol=2, labels = c("A", "B", "C", "D"))
 
-ggsave('figures/abm_sim.png', width=12, height = 8)
+# ggsave('figures/abm_sim.png', width=12, height = 8)
 
 
 # KS-Statistic
@@ -157,6 +160,10 @@ p3 <- ggplot(ksm, aes(t, ks, group=1, color = factor(signal))) +
   theme(legend.position = "none",
         panel.border = element_rect(colour = "grey", fill=NA, size=1)) +
   scale_color_manual(values=c("black", "red")) +
+  scale_x_continuous(breaks = c(0, 100, 200, 300, 400, 500, 600, 700)) +
+  geom_vline(xintercept = 14*24, linetype = "dashed") +
+  geom_vline(xintercept = 16*24, linetype = "dashed") +
+  annotate("text", x=21*24, y=.55, label="IUU Event Window") +
   NULL
 p3
 
@@ -182,6 +189,10 @@ p4 <- ggplot(ksk, aes(t, kurt, group=1, color = factor(signal))) +
   theme(legend.position = "none",
         panel.border = element_rect(colour = "grey", fill=NA, size=1)) +
   scale_color_manual(values=c("black", "red")) +
+  scale_x_continuous(breaks = c(0, 100, 200, 300, 400, 500, 600, 700)) +
+  geom_vline(xintercept = 14*24, linetype = "dashed") +
+  geom_vline(xintercept = 16*24, linetype = "dashed") +
+  annotate("text", x=21*24, y=16, label="IUU Event Window") +
   NULL
 p4
 
