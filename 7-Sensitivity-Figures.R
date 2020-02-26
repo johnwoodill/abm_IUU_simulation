@@ -25,6 +25,8 @@ bdat <- rbindlist(lapply(files, read_csv))
 bdat <- as.data.frame(bdat)
 
 bdat <- filter(bdat, sep_ie <= 0.50)
+bdat$sep_ie <- bdat$sep_ie*100
+
 # bdat$ks_mean_delta <- bdat$ks_mean/(mean(bdat$ks_mean))
 # bdat$ks_kurt_delta <- bdat$ks_kurt/(mean(bdat$ks_kurt))
 
@@ -74,26 +76,28 @@ p2 <- ggplot(pdat1, aes(x=nagents, y=kurt_mu)) +
 
 p3 <- ggplot(pdat2, aes(x=sep_ie, y=mean_mu)) + 
   theme_tufte(12) +
-  labs(x="Repulsion Margin to IUU Vessel", y="Anomaly Index (Mean) Sensitivity") +
+  labs(x="Repulsion Margin to IUU Vessel (km)", y="Anomaly Index (Mean) Sensitivity") +
   geom_line() + 
   scale_color_gradient(low="blue", high="red") +
   geom_ribbon(aes(ymin = (mean_mu - mean_se*1.96),
                   ymax = (mean_mu + mean_se*1.96)), alpha = 0.2) +
   theme(panel.border = element_rect(colour = "grey", fill=NA, size=1)) +
   # theme(legend.position = "none") +
+  ylim(0, max(pdat2$mean_mu) + 0.05) +
   NULL
 
 # ggsave("figures/S1-ABM_Sensitivity_Mean.png", width=6, height=5)
 
 p4 <- ggplot(pdat2, aes(x=sep_ie, y=kurt_mu)) + 
   theme_tufte(12) +
-  labs(x="Repulsion Margin to IUU Vessel", y="Anomaly Index (Kurtosis) Sensitivity") +
+  labs(x="Repulsion Margin to IUU Vessel (km)", y="Anomaly Index (Kurtosis) Sensitivity") +
   geom_line() + 
   scale_color_gradient(low="blue", high="red") +
   geom_ribbon(aes(ymin = (kurt_mu - kurt_se*1.96),
                   ymax = (kurt_mu + kurt_se*1.96)), alpha = 0.2) +
   theme(panel.border = element_rect(colour = "grey", fill=NA, size=1)) +
   # theme(legend.position = "none") +
+  ylim(0, max(pdat2$kurt_mu) + 1) +
   NULL
 
 
