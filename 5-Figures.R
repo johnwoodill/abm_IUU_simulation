@@ -31,16 +31,32 @@ pdat1 = filter(dat, t == tt)
 ipdat1 = filter(idat, t == tt)
 
 
+pdat1_nn <- pdat1 %>% mutate(k = 1) 
+
+pdat1_nn <- pdat1_nn %>% 
+ full_join(pdat1_nn, by = "k") %>% 
+ mutate(dist = sqrt((x1.x - x1.y)^2 + (y1.x - y1.y)^2)) %>%
+ select(-k) %>% 
+ group_by(vessel.x) %>% 
+ arrange(dist) %>% 
+ mutate(nn = 1:10) %>% 
+ filter(row_number() %in% c(2, 3, 4, 5, 6))  %>% 
+ mutate(nn = 1:5) %>% 
+ arrange(vessel.x)
+
+
 print("Creating Plot 1")
 
 p1 <- ggplot(pdat1, aes(x1, y1)) +
   labs(y="Latitude", x="Longitude") +
   # theme_bw() +
   theme_tufte(12) +
-  geom_point(shape=2) +
+  # geom_point(shape=2) +
   geom_point(data=ipdat1, color="red") +
   # geom_point(aes(x1, y1, color=factor(alert_status))) +
-  geom_point(aes(x1, y1, color=factor(fishing_status)), shape=2) +
+  # geom_point(aes(x1, y1, color=factor(fishing_status)), shape=2) +
+  geom_segment(data=pdat1_nn, aes(x=x1.x, y=y1.x, xend=x1.y, yend=y1.y), color='grey') +
+  geom_point(aes(x1, y1, color=factor(fishing_status)), color='red', size=1) +
   annotate("text", x= .7, y= .25, label="Fishing Area", color='black') +
   geom_segment(aes(x=0.60, xend=0.8, y=0.2, yend=0.20), color='grey', linetype="dashed") +
   geom_segment(aes(x=0.60, xend=0.8, y=0.8, yend=0.80), color='grey', linetype="dashed") +
@@ -70,6 +86,9 @@ p1 <- ggplot(pdat1, aes(x1, y1)) +
   NULL
 p1
 
+
+
+
 364
 
 tt = 364
@@ -79,17 +98,32 @@ pdat2 = filter(dat, t == tt)
 ipdat2 = filter(idat, t == tt)
 
 
+pdat2_nn <- pdat2 %>% mutate(k = 1) 
+
+pdat2_nn <- pdat2_nn %>% 
+ full_join(pdat2_nn, by = "k") %>% 
+ mutate(dist = sqrt((x1.x - x1.y)^2 + (y1.x - y1.y)^2)) %>%
+ select(-k) %>% 
+ group_by(vessel.x) %>% 
+ arrange(dist) %>% 
+ mutate(nn = 1:10) %>% 
+ filter(row_number() %in% c(2, 3, 4, 5, 6))  %>% 
+ mutate(nn = 1:5) %>% 
+ arrange(vessel.x)
+
+
 print("Creating Plot 1")
 
 p2 <- ggplot(pdat2, aes(x1, y1)) +
   labs(y="Latitude", x="Longitude") +
   theme_tufte(12) +
-  geom_point(shape=2) +
+  # geom_point(shape=2) +
   # geom_point(data=ipdat2, color="red2", shape=16, size=20, alpha=0.25) + # Shaded region IUU 
   geom_point(data=ipdat2, color="red", shape=1, size=3.5) +
   geom_point(data=ipdat2, color="red") +
   # geom_point(aes(x1, y1, color=factor(alert_status))) +
-  geom_point(aes(x1, y1, color=factor(fishing_status)), shape=2) +
+  geom_segment(data=pdat2_nn, aes(x=x1.x, y=y1.x, xend=x1.y, yend=y1.y), color='grey') +
+  geom_point(aes(x1, y1, color=factor(fishing_status)), color='red') +
   annotate("text", x= .7, y= .25, label="Fishing Area", color='black') +
   geom_segment(aes(x=0.60, xend=0.8, y=0.2, yend=0.20), color='grey', linetype="dashed") +
   geom_segment(aes(x=0.60, xend=0.8, y=0.8, yend=0.80), color='grey', linetype="dashed") +
@@ -153,17 +187,17 @@ ksm
 print("Creating Plot 2")
 
 p3 <- ggplot(ksm, aes(t, ks, group=1, color = factor(signal))) +
-  # geom_point() +
-  geom_line() +
+  geom_point(data=filter(ksm, signal == 1), aes(t, ks), color='#d62728', size=3) +
+  geom_line(color='#1f77b4') +
   theme_tufte(12) +
   labs(x="Hour in Month", y="Anomaly Index (Mean)") +
   theme(legend.position = "none",
         panel.border = element_rect(colour = "grey", fill=NA, size=1)) +
   scale_color_manual(values=c("black", "red")) +
   scale_x_continuous(breaks = c(0, 100, 200, 300, 400, 500, 600, 700)) +
-  geom_vline(xintercept = 14*24, linetype = "dashed") +
-  geom_vline(xintercept = 16*24, linetype = "dashed") +
-  annotate("text", x=21*24, y=.55, label="IUU Event Window") +
+  # geom_vline(xintercept = 14*24, linetype = "dashed") +
+  geom_vline(xintercept = 15*24, linetype = "dashed", color='#d62728', size=1) +
+  # annotate("text", x=20*24, y=.55, label="IUU Event Window") +
   NULL
 p3
 
@@ -182,17 +216,17 @@ ksk
 print("Creating Plot 3")
 
 p4 <- ggplot(ksk, aes(t, kurt, group=1, color = factor(signal))) + 
-  # geom_point() +
-  geom_line() +
+  geom_point(data=filter(ksk, signal == 1), aes(t, kurt), color='#d62728', size=3) +
+  geom_line(color='#1f77b4') +
   theme_tufte(12) +
   labs(x="Hour in Month", y="Anomaly Index (Kurtosis)") +
   theme(legend.position = "none",
         panel.border = element_rect(colour = "grey", fill=NA, size=1)) +
   scale_color_manual(values=c("black", "red")) +
   scale_x_continuous(breaks = c(0, 100, 200, 300, 400, 500, 600, 700)) +
-  geom_vline(xintercept = 14*24, linetype = "dashed") +
-  geom_vline(xintercept = 16*24, linetype = "dashed") +
-  annotate("text", x=21*24, y=16, label="IUU Event Window") +
+  # geom_vline(xintercept = 14*24, linetype = "dashed") +
+  geom_vline(xintercept = 15*24, linetype = "dashed", color='#d62728', size=1) +
+  # annotate("text", x=20*24, y=16, label="IUU Event Window") +
   NULL
 p4
 
