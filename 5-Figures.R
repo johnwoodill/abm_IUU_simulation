@@ -4,6 +4,7 @@ library(gifski)
 library(moments)
 library(magick)
 library(cowplot)
+library(ggthemes)
 #install.packages('gifski')
 #install.packages('png')
 
@@ -28,6 +29,7 @@ tt = 100
 
 
 pdat1 = filter(dat, t == tt)
+pdat1s = filter(dat, t == tt | t == tt + 1)
 ipdat1 = filter(idat, t == tt)
 
 
@@ -44,7 +46,14 @@ pdat1_nn <- pdat1_nn %>%
  mutate(nn = 1:5) %>% 
  arrange(vessel.x)
 
+pdat2 <- pdat1 %>% 
+  arrange(vessel, t) %>% 
+  mutate(x_2 = x1 + 0.0001 * (lead(x1) - x1),
+         y_2 = y1 + 0.0001 * (lead(y1) - y1)) %>%
+  filter(!is.na(x_2))
 
+
+  
 print("Creating Plot 1")
 
 p1 <- ggplot(pdat1, aes(x1, y1)) +
@@ -56,19 +65,23 @@ p1 <- ggplot(pdat1, aes(x1, y1)) +
   # geom_point(aes(x1, y1, color=factor(alert_status))) +
   # geom_point(aes(x1, y1, color=factor(fishing_status)), shape=2) +
   geom_segment(data=pdat1_nn, aes(x=x1.x, y=y1.x, xend=x1.y, yend=y1.y), color='grey') +
-  geom_point(aes(x1, y1, color=factor(fishing_status)), color='red', size=1) +
+  # geom_segment(data = pdat2, aes(x=x1, y=y1, xend = x_2, yend = y_2),
+  #              arrow = arrow(length = unit(.3,"cm"))) +
+  # geom_point(aes(x1, y1, color=factor(fishing_status)), color='red', size=2) +
+  geom_segment(data = pdat2, aes(x=x1, y=y1, xend = x_2, yend = y_2),
+               arrow = arrow(length = unit(.3,"cm")), color='red') +
   annotate("text", x= .7, y= .25, label="Fishing Area", color='black') +
   geom_segment(aes(x=0.60, xend=0.8, y=0.2, yend=0.20), color='grey', linetype="dashed") +
   geom_segment(aes(x=0.60, xend=0.8, y=0.8, yend=0.80), color='grey', linetype="dashed") +
   geom_segment(aes(x=0.60, xend=0.6, y=0.2, yend=0.80), color='grey', linetype="dashed") +
   geom_segment(aes(x=0.80, xend=0.8, y=0.2, yend=0.80), color='grey', linetype="dashed") +
-  annotate("text", x= .46, y= 1.321, label="Normal", color='black') +
+  annotate("text", x= 0.5551, y= 0.90, label="Normal", color='black') +
   scale_color_manual(values=c("black", "red")) +
   # transition_manual(frames = t) +
-  # ylim(-5, 5) +
-  # xlim(-5, 5) +
-  ylim(min(dat$y1) - 0.10, max(dat$y1) + 0.10) +
-  xlim(min(dat$x1) - 0.10, max(dat$x1) + 0.10) +
+  ylim(0.1, 0.9) +
+  xlim(0.55, 0.85) +
+  # ylim(min(dat$y1) - 0.10, max(dat$y1) + 0.10) +
+  # xlim(min(dat$x1) - 0.10, max(dat$x1) + 0.10) +
   theme(
     #axis.title.x=element_blank(),
     axis.text.x=element_blank(),
@@ -89,13 +102,21 @@ p1
 
 
 
-364
+# 335
 
-tt = 364
+tt = 335
 
 
 pdat2 = filter(dat, t == tt)
+
 ipdat2 = filter(idat, t == tt)
+
+pdat2s = filter(dat, t == tt | t == tt + 1)
+
+#Adjust to show exaggerated directional change
+pdat2s[pdat2s['vessel'] == 0, 'y1'][[1]][2] = pdat2s[pdat2s['vessel'] == 0, 'y1'][[1]][1] + 0.5
+pdat2s[pdat2s['vessel'] == 1, 'y1'][[1]][2] = pdat2s[pdat2s['vessel'] == 1, 'y1'][[1]][1] + 0.5
+pdat2s[pdat2s['vessel'] == 2, 'y1'][[1]][2] = pdat2s[pdat2s['vessel'] == 2, 'y1'][[1]][1] + 0.5
 
 
 pdat2_nn <- pdat2 %>% mutate(k = 1) 
@@ -111,6 +132,15 @@ pdat2_nn <- pdat2_nn %>%
  mutate(nn = 1:5) %>% 
  arrange(vessel.x)
 
+pdat3 <- pdat2s %>% 
+  arrange(vessel, t) %>% 
+  mutate(x_2 = x1 + 0.0001 * (lead(x1) - x1),
+         y_2 = y1 + 0.0001 * (lead(y1) - y1)) %>%
+  filter(!is.na(x_2)) %>% 
+  filter(t == tt)
+
+
+
 
 print("Creating Plot 1")
 
@@ -123,13 +153,15 @@ p2 <- ggplot(pdat2, aes(x1, y1)) +
   geom_point(data=ipdat2, color="red") +
   # geom_point(aes(x1, y1, color=factor(alert_status))) +
   geom_segment(data=pdat2_nn, aes(x=x1.x, y=y1.x, xend=x1.y, yend=y1.y), color='grey') +
-  geom_point(aes(x1, y1, color=factor(fishing_status)), color='red') +
+  # geom_point(aes(x1, y1, color=factor(fishing_status)), color='red', size=2) +
+  geom_segment(data = pdat3, aes(x=x1, y=y1, xend = x_2, yend = y_2),
+               arrow = arrow(length = unit(.3,"cm")), color='red') +
   annotate("text", x= .7, y= .25, label="Fishing Area", color='black') +
   geom_segment(aes(x=0.60, xend=0.8, y=0.2, yend=0.20), color='grey', linetype="dashed") +
   geom_segment(aes(x=0.60, xend=0.8, y=0.8, yend=0.80), color='grey', linetype="dashed") +
   geom_segment(aes(x=0.60, xend=0.6, y=0.2, yend=0.80), color='grey', linetype="dashed") +
   geom_segment(aes(x=0.80, xend=0.8, y=0.2, yend=0.80), color='grey', linetype="dashed") +
-  annotate("text", x= .47, y= 1.321, label="IUU Event", color='black') +
+  annotate("text", x= 0.562, y= 0.9, label="IUU Event", color='black') +
   scale_color_manual(values=c("black", "red")) +
   # geom_segment(aes(x = 0.7715, y = 0.6, xend = 0.7715, yend = 0.67),
               # color='red', size=.75, arrow = arrow(length = unit(0.15, "cm"))) +
@@ -142,8 +174,10 @@ p2 <- ggplot(pdat2, aes(x1, y1)) +
   # transition_manual(frames = t) +
   # ylim(-5, 5) +
   # xlim(-5, 5) +
-  ylim(min(dat$y1) - 0.10, max(dat$y1) + 0.10) +
-  xlim(min(dat$x1) - 0.10, max(dat$x1) + 0.10) +
+  # ylim(min(dat$y1) - 0.10, max(dat$y1) + 0.10) +
+  # xlim(min(dat$x1) - 0.10, max(dat$x1) + 0.10) +
+  ylim(0.1, 0.9) +
+  xlim(0.55, 0.85) +
   theme(
     #axis.title.x=element_blank(),
     axis.text.x=element_blank(),
