@@ -351,8 +351,6 @@ def main(perms_):
 
         # print("Calculate JS Statistics")
         # Step 3: Calculate JS
-        #global ddat
-        
         js_dat = ddat.groupby('t', as_index=False).apply(lambda x: calc_ks(x, ddat))
 
         # print("Calculate mean and kurtosis of JS")
@@ -366,6 +364,9 @@ def main(perms_):
         # Save data
         odat = odat.reset_index(drop=True)
         odat.to_csv(f"data/sens/v{NAGENTS}-ie{sep_ie}.csv")
+
+        sdat = js_dat.reset_index(drop=True)
+        sdat.to_csv(f"data/full_sens/{NAGENTS}-ie{sep_ie}.csv")
         return 0
     except:
         return 1
@@ -380,12 +381,12 @@ def main(perms_):
 #mk_dat = calc_anom_det(tdat)
 #mk_dat
 
-perms = [(x, y) for x in range(2, 100, 1) for y in (np.linspace(0, 100, 100)/100)]
+perms = [(x, y) for x in range(2, 100, 1) for y in (np.linspace(0, 50, 50)/100)]
 
 
 #-----------------------------------------
 # Parallel loop
-ncores = 50
+ncores = 40
 pool = multiprocessing.Pool(ncores, maxtasksperchild=1)         
 pool.map(main, perms)
 pool.close()

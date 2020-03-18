@@ -26,6 +26,8 @@ tail(idat)
 
 length(unique(dat$t))
 
+dat$fishing_status <- ifelse(dat$fishing_status == "Traveling", "Foraging", dat$fishing_status)
+
 # dat = filter(dat, t <= 90)
 # idat = filter(idat, t <= 90)
 
@@ -161,7 +163,7 @@ for(i in 2:nframes){
 print("Saving Plot")
 
 # Save animation
-anim_save("~/Projects/abm_IUU_simulation/figures/abm_iuu_simulation_v0.50.gif", new_gif)
+anim_save("~/Projects/abm_IUU_simulation/figures/abm_iuu_simulation_v0.50_V2.gif", new_gif)
 
 
 
