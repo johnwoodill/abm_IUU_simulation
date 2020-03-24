@@ -383,10 +383,13 @@ def main(perms_):
 
 perms = [(x, y) for x in range(2, 100, 1) for y in (np.linspace(0, 50, 50)/100)]
 
+perms = [(x, y) for x in range(2, 100, 1) for y in (np.linspace(25, 25, 1)/100)]
+
+perms_ = perms[0]
 
 #-----------------------------------------
 # Parallel loop
-ncores = 40
+ncores = 50
 pool = multiprocessing.Pool(ncores, maxtasksperchild=1)         
 pool.map(main, perms)
 pool.close()
