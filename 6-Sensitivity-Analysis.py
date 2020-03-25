@@ -315,6 +315,8 @@ def calc_ks(idat, ddat):
         rvs2 = h3.stack()[keep].values
         # Calculate KS statistic
         kss1 = stats.ks_2samp(rvs1, rvs2)
+        kss1 
+        
         ks_stat1 = kss1[0]
         pvalue1 = kss1[1]
         indat = pd.DataFrame({'t': [i], 'lag': i - j, 'ks': [ks_stat1], 'pvalue': [pvalue1]})
@@ -383,9 +385,9 @@ def main(perms_):
 
 perms = [(x, y) for x in range(2, 100, 1) for y in (np.linspace(0, 50, 50)/100)]
 
-perms = [(x, y) for x in range(2, 100, 1) for y in (np.linspace(25, 25, 1)/100)]
+# perms = [(x, y) for x in range(75, 100, 1) for y in (np.linspace(25, 25, 1)/100)]
 
-perms_ = perms[0]
+#perms_ = perms[0]
 
 #-----------------------------------------
 # Parallel loop

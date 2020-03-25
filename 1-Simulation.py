@@ -27,7 +27,7 @@ fspeed = 0.0025   # Fishing speed
 
 
 e = 0.001          # separation error
-ie = 0.25         # IUU separation error
+ie = 0.25        # IUU separation error
 FA_X1 = 0.6       # Fishing area coords.
 FA_X2 = 0.8
 FA_Y1 = 0.2
@@ -229,11 +229,11 @@ for t in range(NTIME):
         
 # Vessel data
 odat = odat.reset_index(drop=True)
-odat.to_feather('data/vessel_dat.feather')
+odat.to_feather(f"data/v0.50/vessel_dat_{NAGENTS}_{ie}.feather")
 
 # Illegal Vessel Data
 idat = idat.reset_index(drop=True)
-idat.to_feather('data/iuu_vessel_dat.feather')
+idat.to_feather(f"data/v0.50/iuu_vessel_dat_{NAGENTS}_{ie}.feather")
 
 
 

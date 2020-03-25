@@ -130,8 +130,8 @@ for (i in 1:length(files)){
               kurt_ks = kurtosis(ks),
               mean_pvalue = mean(pvalue))
   
-  mean_95 <- quantile(dat2$mean_ks, c(0.95), na.rm=TRUE)
-  kurt_95 <- quantile(dat2$kurt_ks, c(0.95), na.rm=TRUE)
+  mean_95 <- quantile(filter(dat2, t <= 200)$mean_ks, c(0.95), na.rm=TRUE)
+  kurt_95 <- quantile(filter(dat2, t <= 200)$kurt_ks, c(0.95), na.rm=TRUE)
   
   kurt_95 <- ifelse(is.na(kurt_95), 999, kurt_95)
   
@@ -231,3 +231,99 @@ plot_grid(p5, p6, p7, p8, ncol=2, labels = c("A", "B", "C", "D"), rel_widths = c
 
 ggsave("figures/S2-ABM_Sensitivity_Mean_Kurt_Day.png", width=12, height=10)
 
+
+
+# ---------------------------------------------------------
+# Figure S3 Sensitivity around IUU event - fraction of days alert in event window
+
+
+files <- list.files("~/Projects/abm_IUU_simulation/data/figureS2_data/", full.names = TRUE)
+bdat <- rbindlist(lapply(files, read_csv))
+bdat <- as.data.frame(bdat)
+
+# Get proportion of event window alert
+bdat$agents_margin <- paste0(bdat$agents, "_", bdat$margin)
+
+head(bdat)
+
+# Mean
+bdat2 <- bdat %>% 
+  filter(metric == "mean" & margin <= 0.40) %>% 
+  filter(t > 13*24 & t < 16*24) %>% 
+  group_by(agents_margin) %>% 
+  summarise(frac = n()/72,
+            agents = mean(agents),
+            margin = mean(margin))
+
+dp1 <- ggplot(bdat2, aes(x=margin*100, y=agents)) + 
+  geom_tile(aes(fill=frac)) +
+  theme_tufte(12) +
+  ggtitle("Proportion of Alerted Days in Event Window \n (Mean Anomaly Index)") +
+  labs(x=NULL, y="Number of Agents", fill="P(Days)") +
+  lims(fill = c(0, 1)) +
+  scale_fill_gradientn(colours=rev(brewer.pal(11, "Spectral")), na.value = 'salmon', 
+                       limits = c(0, 1), 
+                       breaks = c(0.0, 0.25, 0.50, 0.75, 1)) +
+  scale_y_continuous(expand=c(0,0), breaks = c(10, 20, 30, 40, 50, 60, 70, 80, 90, 100)) +
+  scale_x_continuous(expand=c(0,0), breaks = seq(0, 50, 5)) +
+  theme(legend.position = 'right',
+        
+        plot.title = element_text(hjust = 0.5),
+        legend.margin=margin(l = 0, unit='cm'),
+        panel.border = element_rect(colour = "grey", fill=NA, size=1),
+        panel.grid = element_blank(),
+        panel.background=element_rect(fill="#5E4FA2", colour="#5E4FA2")) +
+  guides(fill = guide_colorbar(label.hjust = unit(0, 'cm'),
+                               frame.colour = "black",
+                               barwidth = .5,
+                               barheight = 13,
+                               draw.ulim = TRUE)) +
+  NULL
+
+
+# Kurtosis
+bdat3 <- bdat %>% 
+  filter(metric == "kurt" & margin <= 0.40) %>% 
+  filter(t > 14*24 & t < 15*24) %>% 
+  group_by(agents_margin) %>% 
+  summarise(frac = n()/24,
+            agents = mean(agents),
+            margin = mean(margin))
+
+dp2 <- ggplot(bdat3, aes(x=margin*100, y=agents)) + 
+  geom_tile(aes(fill=frac)) +
+  theme_tufte(12) +
+  ggtitle("Proportion of Alert on 15th Day \n (Kurtosis Anomaly Index)") +
+  labs(x="Exclusion Margin (km)", y="Number of Agents", fill="P(Days)") +
+  lims(fill = c(0, 1)) +
+  scale_fill_gradientn(colours=rev(brewer.pal(11, "Spectral")), na.value = 'salmon', 
+                       limits = c(0, 1), 
+                       breaks = c(0.0, 0.25, 0.50, 0.75, 1)) +
+  scale_y_continuous(expand=c(0,0), 
+                     breaks = c(10, 20, 30, 40, 50, 60, 70, 80, 90, 100),
+                     labels = c(10, 20, 30, 40, 50, 60, 70, 80, 90, 100)) +
+  scale_x_continuous(expand=c(0,0), breaks = seq(0, 50, 5)) +
+  theme(legend.position = 'right',
+        plot.title = element_text(hjust = 0.5),
+        legend.margin=margin(l = 0, unit='cm'),
+        panel.border = element_rect(colour = "grey", fill=NA, size=1),
+        panel.grid = element_blank(),
+        panel.background=element_rect(fill="#5E4FA2", colour="#5E4FA2")) +
+  guides(fill = guide_colorbar(label.hjust = unit(0, 'cm'),
+                               frame.colour = "black",
+                               barwidth = .5,
+                               barheight = 13,
+                               draw.ulim = TRUE)) +
+  NULL
+
+dp2
+# dp1
+# dp2
+
+plot_grid(dp1, dp2, ncol = 1,labels = c("A", "B"))
+
+ggsave("figures/S4-ABM_Sensitivity_Mean_Prop_Days.pdf", width = 5, height = 8)
+  
+  
+  
+  

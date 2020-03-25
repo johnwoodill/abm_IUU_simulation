@@ -28,6 +28,7 @@ length(unique(dat$t))
 tt = 100
 
 
+
 pdat1 = filter(dat, t == tt)
 pdat1s = filter(dat, t == tt | t == tt + 1)
 ipdat1 = filter(idat, t == tt)
@@ -114,7 +115,7 @@ ipdat2 = filter(idat, t == tt)
 pdat2s = filter(dat, t == tt | t == tt + 1)
 
 #Adjust to show exaggerated directional change
-pdat2s[pdat2s['vessel'] == 0, 'y1'][[1]][2] = pdat2s[pdat2s['vessel'] == 0, 'y1'][[1]][1] + 0.5
+# pdat2s[pdat2s['vessel'] == 0, 'y1'][[1]][2] = pdat2s[pdat2s['vessel'] == 0, 'y1'][[1]][1] + 0.5
 pdat2s[pdat2s['vessel'] == 1, 'y1'][[1]][2] = pdat2s[pdat2s['vessel'] == 1, 'y1'][[1]][1] + 0.5
 pdat2s[pdat2s['vessel'] == 2, 'y1'][[1]][2] = pdat2s[pdat2s['vessel'] == 2, 'y1'][[1]][1] + 0.5
 
@@ -149,9 +150,6 @@ p2 <- ggplot(pdat2, aes(x1, y1)) +
   theme_tufte(12) +
   # geom_point(shape=2) +
   # geom_point(data=ipdat2, color="red2", shape=16, size=20, alpha=0.25) + # Shaded region IUU 
-  geom_point(data=ipdat2, color="red", shape=1, size=3.5) +
-  geom_point(data=ipdat2, color="red") +
-  # geom_point(aes(x1, y1, color=factor(alert_status))) +
   geom_segment(data=pdat2_nn, aes(x=x1.x, y=y1.x, xend=x1.y, yend=y1.y), color='grey') +
   # geom_point(aes(x1, y1, color=factor(fishing_status)), color='red', size=2) +
   geom_segment(data = pdat3, aes(x=x1, y=y1, xend = x_2, yend = y_2),
@@ -163,6 +161,11 @@ p2 <- ggplot(pdat2, aes(x1, y1)) +
   geom_segment(aes(x=0.80, xend=0.8, y=0.2, yend=0.80), color='grey', linetype="dashed") +
   annotate("text", x= 0.562, y= 0.9, label="IUU Event", color='black') +
   scale_color_manual(values=c("black", "red")) +
+  geom_point(data=ipdat2, color="darkred", alpha = 0.15, size=100) +
+  geom_point(data=ipdat2, color="red", shape=1, size=3.5) +
+  geom_point(data=ipdat2, color="red") +
+  geom_rect(data = NULL, aes(xmin=0.8, xmax=1, ymin=0.1, ymax=.9), fill="white", inherit.aes = FALSE) +
+  geom_rect(data = NULL, aes(xmin=0.6, xmax=1, ymin=0, ymax=0.2), fill="white", inherit.aes = FALSE) +
   # geom_segment(aes(x = 0.7715, y = 0.6, xend = 0.7715, yend = 0.67),
               # color='red', size=.75, arrow = arrow(length = unit(0.15, "cm"))) +
   # geom_segment(aes(x = 0.7625, y = 0.58, xend = 0.745, yend = 0.635),
@@ -176,8 +179,9 @@ p2 <- ggplot(pdat2, aes(x1, y1)) +
   # xlim(-5, 5) +
   # ylim(min(dat$y1) - 0.10, max(dat$y1) + 0.10) +
   # xlim(min(dat$x1) - 0.10, max(dat$x1) + 0.10) +
-  ylim(0.1, 0.9) +
-  xlim(0.55, 0.85) +
+  # ylim(0.08, 0.9) +
+  coord_cartesian(ylim=c(0.08, 0.9), xlim = c(0.55, 0.85)) +
+  # xlim(0.55, 0.85) +
   theme(
     #axis.title.x=element_blank(),
     axis.text.x=element_blank(),
