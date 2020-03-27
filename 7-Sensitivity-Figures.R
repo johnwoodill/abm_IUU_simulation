@@ -322,7 +322,7 @@ dp2
 
 plot_grid(dp1, dp2, ncol = 1,labels = c("A", "B"))
 
-ggsave("figures/S4-ABM_Sensitivity_Mean_Prop_Days.pdf", width = 5, height = 8)
+ggsave("figures/S4-ABM_Sensitivity_Mean_Prop_Days.png", width = 5, height = 8)
   
   
   

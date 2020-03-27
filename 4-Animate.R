@@ -19,13 +19,21 @@ adat <- data.frame(agents = c(10, 75, 10, 75, 10),
                    margins = c(0.10, 0.10, 0.35, 0.35, 0.25),
                    margin_cir = c(75, 75, 110, 110, 100))
 
+VERSION = 0.51
+
 for (i in 1:nrow(adat)){
   AGENTS = adat$agents[i]
   MARGIN = adat$margins[i]
   MARGIN_CIR = adat$margin_cir[i]
 
-  dat = read_feather(paste0("~/Projects/abm_IUU_simulation/data/v0.50/vessel_dat_", AGENTS, "_", MARGIN, ".feather"))
-  # head(dat)
+  AGENTS = 10
+  MARGIN = 0.25
+  MARGIN_CIR = 100
+  
+  dat = read_feather(paste0("~/Projects/abm_IUU_simulation/data/v", VERSION, "/vessel_dat_", AGENTS, "_", MARGIN, ".feather"))
+  
+  # Main results
+  # dat = read_feather(paste0("~/Projects/abm_IUU_simulation/data/v0.50/vessel_dat_backup.feather"))
   
   nframes = 200
   
@@ -34,7 +42,10 @@ for (i in 1:nrow(adat)){
   # sum(dat$x1)
   # sd(dat$x1)
   
-  idat = read_feather(paste0("~/Projects/abm_IUU_simulation/data/v0.50/iuu_vessel_dat_", AGENTS, "_", MARGIN, ".feather"))
+  idat = read_feather(paste0("~/Projects/abm_IUU_simulation/data/v", VERSION, "/iuu_vessel_dat_", AGENTS, "_", MARGIN, ".feather"))
+  
+  # Main results
+  # idat = read_feather(paste0("~/Projects/abm_IUU_simulation/data/v0.50/iuu_vessel_dat_backup.feather"))
   
   dat$fishing_status <- ifelse(dat$fishing_status == "Traveling", "Transiting", dat$fishing_status)
   
@@ -91,7 +102,7 @@ for (i in 1:nrow(adat)){
     labs(title = 'Hour of Month: {current_frame} \nHour of IUU Event: 336') +
     NULL
   
-  # p1
+  p1
   
   # animate(p1, nframes = nframes)
   
@@ -99,8 +110,10 @@ for (i in 1:nrow(adat)){
   
   
   # KS-Statistic
-  ksdat = read_feather(paste0("~/Projects/abm_IUU_simulation/data/v0.50/ks_data_", AGENTS, "_", MARGIN, ".feather"))
+  ksdat = read_feather(paste0("~/Projects/abm_IUU_simulation/data/v", VERSION, "/ks_data_", AGENTS, "_", MARGIN, ".feather"))
   
+  # Main results
+  # ksdat = read_feather(paste0("~/Projects/abm_IUU_simulation/data/v0.50/ks_data_backup.feather"))
   
   # Mean results
   ksm <- ksdat %>% 
@@ -174,7 +187,7 @@ for (i in 1:nrow(adat)){
     new_gif <- c(new_gif, combined)
   }
   
-  # new_gif
+  new_gif
   
   print(paste0("Saving Plot: ", AGENTS, "-", MARGIN))
   

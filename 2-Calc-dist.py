@@ -23,7 +23,7 @@ def haversine(lon1, lat1, lon2, lat2):
     return c * r
 
 
-dat = pd.read_feather(f"data/v0.50/vessel_dat_{NAGENTS}_{ie}.feather")
+dat = pd.read_feather(f"data/v0.51/vessel_dat_{NAGENTS}_{ie}.feather")
 
 
 def dist_mat(ndat):
@@ -50,7 +50,7 @@ dat2 = dat.groupby('t').apply(lambda x: dist_mat(x))
 # Save
 dat2.columns = dat2.columns.astype(str)
 dat2 = dat2.reset_index(drop=True)
-dat2.to_feather(f"data/v0.50/all_dist_matrix_{NAGENTS}_{ie}.feather")
+dat2.to_feather(f"data/v0.51/all_dist_matrix_{NAGENTS}_{ie}.feather")
 
 
 # Check dist formula

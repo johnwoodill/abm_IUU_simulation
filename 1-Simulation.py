@@ -105,26 +105,26 @@ agents = pd.DataFrame({'fishing_status': "Traveling",
                              'fyLoc': random.sample(fyVec, NAGENTS)})
 
 # Illegal vessel location data
-ivessel = pd.DataFrame({'xLoc': [0.99], 'yLoc': [0.01], 'fxLoc': [0.70], 'fyLoc': [0.30]})
+ivessel = pd.DataFrame({'xLoc': [0.99], 'yLoc': [0.01], 'fxLoc': [0.01], 'fyLoc': [0.99]})
 # -------------------------------------------------------------------
 # Start simulation
 odat = pd.DataFrame()    # Output data frame to store results
 idat = pd.DataFrame()    # Illegal vessel location data
 for t in range(NTIME):
     # Day 1 of IUU Event
-    if t == 312:   
-        ivessel['fxLoc'][0] = 0.70
-        ivessel['fyLoc'][0] = 0.30
+    # if t == 312:   
+    #     ivessel['fxLoc'][0] = 0.70
+    #     ivessel['fyLoc'][0] = 0.30
     
-    # Day 2 of IUU Event
-    if t == 336:   
-        ivessel['fxLoc'][0] = 0.70
-        ivessel['fyLoc'][0] = 0.80
+    # # Day 2 of IUU Event
+    # if t == 336:   
+    #     ivessel['fxLoc'][0] = 0.70
+    #     ivessel['fyLoc'][0] = 0.80
     
-    # Day 3 of IUU Event
-    if t == 360:   
-        ivessel['fxLoc'][0] = 2.99
-        ivessel['fyLoc'][0] = 2.99
+    # # Day 3 of IUU Event
+    # if t == 360:   
+    #     ivessel['fxLoc'][0] = 2.99
+    #     ivessel['fyLoc'][0] = 2.99
     
     # Assign illegal locations
     ix1 = ivessel['xLoc'][0]
@@ -135,7 +135,7 @@ for t in range(NTIME):
     # Introduce IUU Event 
     if t >= IUU_EVENT:
         # Move IUU vessel
-        ix2, iy2 = calc_vmove(ix1, ifx1, iy1, ify1, max_speed = (tspeed/2))
+        ix2, iy2 = calc_vmove(ix1, ifx1, iy1, ify1, max_speed = (tspeed/6))
         
         # Update vessel
         ivessel['xLoc'][0] = ix2
@@ -229,12 +229,11 @@ for t in range(NTIME):
         
 # Vessel data
 odat = odat.reset_index(drop=True)
-odat.to_feather(f"data/v0.50/vessel_dat_{NAGENTS}_{ie}.feather")
+odat.to_feather(f"data/v0.51/vessel_dat_{NAGENTS}_{ie}.feather")
 
 # Illegal Vessel Data
 idat = idat.reset_index(drop=True)
-idat.to_feather(f"data/v0.50/iuu_vessel_dat_{NAGENTS}_{ie}.feather")
-
+idat.to_feather(f"data/v0.51/iuu_vessel_dat_{NAGENTS}_{ie}.feather")
 
 
 
