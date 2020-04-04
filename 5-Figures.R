@@ -11,21 +11,21 @@ library(ggthemes)
 
 setwd("~/Projects/abm_IUU_simulation/")
 
-dat = read_feather("~/Projects/abm_IUU_simulation/data/v0.50/vessel_dat.feather")
+dat = read_feather("~/Projects/abm_IUU_simulation/data/v0.51/vessel_dat_10_0.25.feather")
 head(dat)
 
-# sum: 10886.89
+ss# sum: 10886.89
 # sd : 0.1172957
 sum(dat$x1)
 sd(dat$x1)
 
-idat = read_feather("~/Projects/abm_IUU_simulation/data/v0.50/iuu_vessel_dat.feather")
+idat = read_feather("~/Projects/abm_IUU_simulation/data/v0.51/iuu_vessel_dat_10_0.25.feather")
 head(idat)
 tail(idat)
 
 length(unique(dat$t))
 
-tt = 100
+tt = 140
 
 
 
@@ -161,7 +161,7 @@ p2 <- ggplot(pdat2, aes(x1, y1)) +
   geom_segment(aes(x=0.80, xend=0.8, y=0.2, yend=0.80), color='grey', linetype="dashed") +
   annotate("text", x= 0.562, y= 0.9, label="IUU Event", color='black') +
   scale_color_manual(values=c("black", "red")) +
-  geom_point(data=ipdat2, color="darkred", alpha = 0.15, size=100) +
+  geom_point(data=ipdat2, color="darkred", alpha = 0.15, size=65) +
   geom_point(data=ipdat2, color="red", shape=1, size=3.5) +
   geom_point(data=ipdat2, color="red") +
   geom_rect(data = NULL, aes(xmin=0.8, xmax=1, ymin=0.1, ymax=.9), fill="white", inherit.aes = FALSE) +
@@ -206,17 +206,20 @@ p2
 
 
 # KS-Statistic
-ksdat = read_feather("~/Projects/abm_IUU_simulation/data/v0.50/ks_data.feather")
-
+ksdat = read_feather("~/Projects/abm_IUU_simulation/data/v0.51/ks_data_10_0.25.feather")
+null_ksdat = read_feather("~/Projects/abm_IUU_simulation/data/v0.51/null_ks_data_10_0.35.feather")
 
 # Mean results
+null_ksm <- null_ksdat %>% 
+  group_by(t) %>% 
+  summarise(ks = mean(ks)) 
+
 ksm <- ksdat %>% 
   group_by(t) %>% 
   summarise(ks = mean(ks)) 
 
 # Get 99th percentile
-qt95 = quantile(ksm$ks, c(.95))
-
+qt95 <- quantile(null_ksm$ks, 0.95)
 
 ksm$signal = ifelse(ksm$ks >= qt95, 1, 0)
 
@@ -243,10 +246,15 @@ p3
 # Kurtosis results
 ksk <- ksdat %>%
   group_by(t) %>%
-  summarise(kurt = kurtosis(ks))
+  summarise(kurt = kurtosis(ks, na.rm = TRUE))
 ksk
 
-qt95 = quantile(ksk$kurt, c(.95), na.rm = TRUE)
+null_ksm <- null_ksdat %>% 
+  group_by(t) %>% 
+  summarise(ks = moments::kurtosis(ks)) 
+
+# Get 99th percentile
+qt95 <- quantile(null_ksm$ks, 0.95, na.rm=TRUE)
 ksk$signal = ifelse(ksk$kurt >= qt95, 1, 0)
 
 ksk

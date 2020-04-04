@@ -14,24 +14,70 @@ setwd("~/Projects/abm_IUU_simulation/")
 # MARGIN = 0.10 - MARGIN_CIR = 75
 # MARGIN = 0.35 - MARGIN_CIR = 110
 
+# Get null simulations for 95%
+v10 <- read_feather("~/Projects/abm_IUU_simulation/data/v0.51/null_ks_data_10_0.35.feather")
+v75 <- read_feather("~/Projects/abm_IUU_simulation/data/v0.51/null_ks_data_75_0.35.feather")
+
+# Mean results (10 vessels)
+mean_qt95_v10 <- v10 %>% 
+  group_by(t) %>% 
+  summarise(mean_ks = mean(ks, na.rm = TRUE)) %>% 
+  ungroup() %>% 
+  summarise(mean_qt95_v10 = quantile(mean_ks, c(0.95)))
+
+# Kurtosis results (10 vessels)
+kurt_qt95_v10 <- v10 %>%
+  group_by(t) %>%
+  summarise(kurt_ks = moments::kurtosis(ks, na.rm = TRUE)) %>% 
+  ungroup() %>% 
+  summarise(kurt_qt95_v10 = quantile(kurt_ks, c(0.95), na.rm = TRUE))
+
+
+# Mean results (75 vessels)
+mean_qt95_v75 <- v75 %>% 
+  group_by(t) %>% 
+  summarise(mean_ks = mean(ks, na.rm = TRUE)) %>% 
+  ungroup() %>% 
+  summarise(mean_qt95_v75 = quantile(mean_ks, c(0.95)))
+
+# Kurtosis results (75 vessels)
+kurt_qt95_v75 <- v75 %>%
+  group_by(t) %>%
+  summarise(kurt_ks = moments::kurtosis(ks, na.rm = TRUE)) %>% 
+  ungroup() %>% 
+  summarise(kurt_qt95_v75 = quantile(kurt_ks, c(0.95), na.rm = TRUE))
+
+ks_stat <- data.frame(agents = c(10, 75),
+                      mean_ksqt95 = c(mean_qt95_v10$mean_qt95_v10, mean_qt95_v75$mean_qt95_v75),
+                      kurt_ksqt95 = c(kurt_qt95_v10$kurt_qt95_v10, kurt_qt95_v75$kurt_qt95_v75))
+
 # Data frame of movies
 adat <- data.frame(agents = c(10, 75, 10, 75, 10),
                    margins = c(0.10, 0.10, 0.35, 0.35, 0.25),
-                   margin_cir = c(75, 75, 110, 110, 100))
+                   margin_cir = c(50, 50, 75, 75, 80))
+adat <- left_join(adat, ks_stat, by = "agents")
 
-VERSION = 0.51
+
 
 for (i in 1:nrow(adat)){
+  VERSION = 0.51
   AGENTS = adat$agents[i]
   MARGIN = adat$margins[i]
   MARGIN_CIR = adat$margin_cir[i]
-
-  AGENTS = 10
-  MARGIN = 0.25
-  MARGIN_CIR = 100
+  MEAN_KSQT95 = adat$mean_ksqt95[i]
+  KURT_KSQT95 = adat$kurt_ksqt95[i]
+  
+  
+  # AGENTS = 10
+  # MARGIN = 0.25
+  # MARGIN_CIR = 100
   
   dat = read_feather(paste0("~/Projects/abm_IUU_simulation/data/v", VERSION, "/vessel_dat_", AGENTS, "_", MARGIN, ".feather"))
-  
+  dat <- filter(dat, vessel != 21)
+  dat <- filter(dat, vessel != 27)
+  dat <- filter(dat, vessel != 28)
+  dat <- filter(dat, vessel != 72)
+  dat <- filter(dat, vessel != 73)
   # Main results
   # dat = read_feather(paste0("~/Projects/abm_IUU_simulation/data/v0.50/vessel_dat_backup.feather"))
   
@@ -102,7 +148,7 @@ for (i in 1:nrow(adat)){
     labs(title = 'Hour of Month: {current_frame} \nHour of IUU Event: 336') +
     NULL
   
-  p1
+  # p1
   
   # animate(p1, nframes = nframes)
   
@@ -116,15 +162,16 @@ for (i in 1:nrow(adat)){
   # ksdat = read_feather(paste0("~/Projects/abm_IUU_simulation/data/v0.50/ks_data_backup.feather"))
   
   # Mean results
-  ksm <- ksdat %>% 
-    group_by(t) %>% 
-      summarise(ks = mean(ks, na.rm = TRUE)) 
+  ksm <- ksdat %>%
+    group_by(t) %>%
+      summarise(ks = mean(ks, na.rm = TRUE))
   
   # Get 99th percentile
-  qt95 = quantile(filter(ksm, t <= 200)$ks, c(.95))
+  # qt95 = quantile(filter(ksm, t <= 200)$ks, c(.95))
   # qt95 = quantile(ksm$ks, c(.95))
   
-  ksm$signal = ifelse(ksm$ks >= qt95, 1, 0)
+  # Mean results
+  ksm$signal = ifelse(ksm$ks >= MEAN_KSQT95, 1, 0)
   
   # print("Creating Plot 2")
   
@@ -147,14 +194,12 @@ for (i in 1:nrow(adat)){
   # Kurtosis results
   ksk <- ksdat %>%
     group_by(t) %>%
-    summarise(kurt = kurtosis(ks, na.rm = TRUE))
+    summarise(kurt = moments::kurtosis(ks, na.rm = TRUE))
   
-  qt95 = quantile(filter(ksk, t <= 200)$kurt, c(.95), na.rm = TRUE)
+  # qt95 = quantile(filter(ksk, t <= 200)$kurt, c(.95), na.rm = TRUE)
   # qt95 = quantile(ksk$kurt, c(.95), na.rm = TRUE)
   
-  ksk$signal = ifelse(ksk$kurt >= qt95, 1, 0)
-  
-  # ksk
+  ksk$signal = ifelse(ksk$kurt >= KURT_KSQT95, 1, 0)
   
   # print("Creating Plot 3")
   
@@ -192,7 +237,7 @@ for (i in 1:nrow(adat)){
   print(paste0("Saving Plot: ", AGENTS, "-", MARGIN))
   
   # Save animation
-  anim_save(paste0("~/Projects/abm_IUU_simulation/figures/abm_iuu_simulation_v0.50_", AGENTS, "_", MARGIN, ".gif"), new_gif)
+  anim_save(paste0("~/Projects/abm_IUU_simulation/figures/abm_iuu_simulation_v",VERSION, "_", AGENTS, "_", MARGIN, ".gif"), new_gif)
 }
 
 

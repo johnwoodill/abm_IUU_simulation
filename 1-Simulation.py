@@ -18,7 +18,7 @@ import scipy.stats
 
 
 # Constants
-NAGENTS = 10     # number of agents
+NAGENTS = 75     # number of agents
 NTIME = 720    # number of time steps 24-hours * 30 days
 IUU_EVENT = 312   # Time of illegal event
 tspeed = 0.025    # Traveling speed
@@ -26,8 +26,8 @@ ispeed = 0.025    # Speed when close to IUU
 fspeed = 0.0025   # Fishing speed
 
 
-e = 0.001          # separation error
-ie = 0.25        # IUU separation error
+e = 0.0025          # separation error
+ie = 0.10        # IUU separation error
 FA_X1 = 0.6       # Fishing area coords.
 FA_X2 = 0.8
 FA_Y1 = 0.2
@@ -99,13 +99,16 @@ yVec = np.random.choice(fyVec, NAGENTS)
 agents = pd.DataFrame({'fishing_status': "Traveling",
                              'alert_status': "Not Alert",
                              'fishing_time': 0,
+                             'alert_time': 0,
                              'xLoc': xVec,
                              'yLoc': yVec,
                              'fxLoc': random.sample(fxVec, NAGENTS),
-                             'fyLoc': random.sample(fyVec, NAGENTS)})
+                             'fyLoc': random.sample(fyVec, NAGENTS),
+                             'axLoc': 0,
+                             'ayLoc': 0})
 
 # Illegal vessel location data
-ivessel = pd.DataFrame({'xLoc': [0.99], 'yLoc': [0.01], 'fxLoc': [0.01], 'fyLoc': [0.99]})
+ivessel = pd.DataFrame({'xLoc': [0.99], 'yLoc': [-0.25], 'fxLoc': [-.5], 'fyLoc': [3], 'status': "Transiting"})
 # -------------------------------------------------------------------
 # Start simulation
 odat = pd.DataFrame()    # Output data frame to store results
@@ -134,9 +137,19 @@ for t in range(NTIME):
 
     # Introduce IUU Event 
     if t >= IUU_EVENT:
+
+        # If inside fishing area, then fish
+        if (ix1 >= FA_X1 and ix1 <= FA_X2 and iy1 >= FA_Y1 and iy1 <= FA_Y2):
+           ivessel['status'][[0]] = "Fishing"
+           iuu_speed = fspeed*2
+        else:
+            ivessel['status'][[0]] = "Transiting"
+            iuu_speed = tspeed
+
         # Move IUU vessel
-        ix2, iy2 = calc_vmove(ix1, ifx1, iy1, ify1, max_speed = (tspeed/6))
-        
+        # ix2, iy2 = calc_vmove(ix1, ifx1, iy1, ify1, max_speed = (tspeed/3))
+        ix2, iy2 = calc_vmove(ix1, ifx1, iy1, ify1, max_speed = iuu_speed)
+
         # Update vessel
         ivessel['xLoc'][0] = ix2
         ivessel['yLoc'][0] = iy2
@@ -154,7 +167,7 @@ for t in range(NTIME):
         fx1 = agents['fxLoc'][i]
         fy1 = agents['fyLoc'][i]
                
-        # If at location fish then find new location
+        # If at location, fish then find new location
         if (dist(x1, fx1, y1, fy1) <= e):
             # If vessel has been at fishing site for 10 hours
             if agents.loc[i, 'fishing_time'] == 10:
@@ -163,9 +176,9 @@ for t in range(NTIME):
                 agents.loc[i, 'fxLoc'] = fx1
                 agents.loc[i, 'fyLoc'] = fy1
                 agents.loc[i, 'fishing_time'] = 0
-                # If returning to fishing spot, change to not alert
-                if agents.loc[i, 'alert_status'] == "After Alert":                
-                    agents.loc[i, 'alert_status'] = "Not Alert"                
+                # # If returning to fishing spot, change to not alert
+                # if agents.loc[i, 'alert_status'] == "Alert":                
+                #     agents.loc[i, 'alert_status'] = "Not Alert"                
             # If not, add 1 hour
             else:
                 agents.loc[i, 'fishing_time'] += 1
@@ -175,32 +188,81 @@ for t in range(NTIME):
         dist_check = agents.sort_values('dist')[1:2]
         dx1 = dist_check['xLoc'].iat[0]
         dy1 = dist_check['yLoc'].iat[0]
-        
+
         # Get distance to IUU Vessel
         idist = round(dist(x1, ix1, y1, iy1), 2)
 
         # If close to IUU Vessel move away
-        if (idist < ie):
-            x2, y2 = calc_vmove(x1, ix1, y1, iy1, inverse_dist=True, max_speed = ispeed, random_dir=True) 
+        # if (idist < ie + 0.10):
+        # if (agents.loc[i, 'alert_status'] == "Alert"):
+        #     if (agents.loc[i, 'alert_time'] <= 2): 
+        #         ax1 = agents.loc[i, 'axLoc']
+        #         ay1 = agents.loc[i, 'ayLoc']
+        #         x2, y2 = calc_vmove(x1, ax1, y1, ay1, inverse_dist=True, max_speed = ispeed, random_dir=True) 
+        #         agents.loc[i, 'alert_time'] += 1
+        #     # elif (agents.loc[i, 'alert_time'] > 10 and agents.loc[i, 'alert_time'] <= 20):
+        #     #     x2, y2 = (x1, y1)
+        #     #     agents.loc[i, 'alert_time'] += 1
+        #     elif (agents.loc[i, 'alert_time'] == 3):
+        #         agents.loc[i, 'alert_status'] = "Stationary"
+        #         agents.loc[i, 'alert_time'] = 0
+
+        if (agents.loc[i, 'alert_status'] == "Stationary"):
+            # x2, y2 = (x1, y1)
+            ax1 = agents.loc[i, 'axLoc']
+            ay1 = agents.loc[i, 'ayLoc']
+            x2, y2 = calc_vmove(x1, ax1, y1, ay1, inverse_dist=True, max_speed = ispeed/3, random_dir=True) 
+            agents.loc[i, 'alert_time'] += 1
+            if (agents.loc[i, 'alert_time'] == 24):
+                agents.loc[i, 'alert_status'] = "Not Alert"
+                agents.loc[i, 'alert_time'] = 0
+
+        elif (idist <= ie and (t <= 16*24 or ivessel['status'][[0]].values == "Fishing")):
+        # el?if (idist < ie):
+            x2, y2 = calc_vmove(x1, ix1, y1, iy1, inverse_dist=True, max_speed = ispeed/3) 
+            agents.loc[i, 'axLoc'] = ix2
+            agents.loc[i, 'ayLoc'] = iy2
             agents.loc[i, 'alert_status'] = "Alert"
-        
+            if (round(dist(x2, ix1, y2, iy1), 4) > ie):
+                agents.loc[i, 'alert_status'] = "Stationary"
+
+        #     fx1 = random.sample(fxVec, 1)[0]
+        #     fy1 = random.sample(fyVec, 1)[0]
+        #     while (dist(x1, fx1, y1, fy1) > 0.65):
+        #         fx1 = random.sample(fxVec, 1)[0]
+        #         fy1 = random.sample(fyVec, 1)[0]                
+        #     agents.loc[i, 'fxLoc'] = fx1
+        #     agents.loc[i, 'fyLoc'] = fy1            
+        #     if (agents.loc[i, 'fishing_status'] == "Fishing"):
+        #         max_speed = fspeed
+        #     else:
+        #         max_speed = tspeed            
+        #     x2, y2 = calc_vmove(x1, fx1, y1, fy1, inverse_dist=False, max_speed = max_speed) 
+
+
         # If outside second margin of IUU don't move
-        if ( (idist >= ie) and (idist <= ie + 0.10) ):
-            x2, y2 = calc_vmove(x1, dx1, y1, dy1, inverse_dist=True, max_speed = tspeed, random_dir=True) 
-            fx1 = random.sample(fxVec, 1)[0]
-            fy1 = random.sample(fyVec, 1)[0]
-            agents.loc[i, 'fxLoc'] = fx1
-            agents.loc[i, 'fyLoc'] = fy1
-            #x2 = x1
-            #y2 = y1
-            agents.loc[i, 'alert_status'] = "Alert"
-       
+        # elif ( (idist >= ie) and (idist <= ie + 0.10) ):
+        #     x2, y2 = calc_vmove(x1, dx1, y1, dy1, inverse_dist=True, max_speed = tspeed, random_dir=True) 
+        #     fx1 = random.sample(fxVec, 1)[0]
+        #     fy1 = random.sample(fyVec, 1)[0]
+        #     agents.loc[i, 'fxLoc'] = fx1
+        #     agents.loc[i, 'fyLoc'] = fy1
+        #     #x2 = x1
+        #     #y2 = y1
+        #     agents.loc[i, 'alert_status'] = "Alert"
+
+        # If close to vessel move away
+        elif (dist_check['dist'].iat[0] <= e):
+            x2, y2 = calc_vmove(x1, dx1, y1, dx1, inverse_dist=True, max_speed = fspeed*2)
+            # agents.loc[i, 'fxLoc'] = x1
+            # agents.loc[i, 'fyLoc'] = y1
+
         # Otherwise, move towards target fishing area at fishing speed      
         elif (agents.loc[i, 'fishing_status'] == "Fishing"):
             x2, y2 = calc_vmove(x1, fx1, y1, fy1, max_speed = fspeed)
             agents.loc[i, 'alert_status'] = "Not Alert"
         
-        # # Otherwise, move towards target fishing area at travel speed
+        # Otherwise, move towards target fishing area at travel speed
         elif (agents.loc[i, 'fishing_status'] == "Traveling"):
             x2, y2 = calc_vmove(x1, fx1, y1, fy1, max_speed = tspeed)
             agents.loc[i, 'alert_status'] = "Not Alert"
@@ -223,8 +285,7 @@ for t in range(NTIME):
         indat = pd.DataFrame({'t': [t], 'fishing_status': agents['fishing_status'][i], 'alert_status': agents['alert_status'][i], 'vessel': [i], 'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2, 'fx1': fx1, 'fy1': fy1})
         odat = pd.concat([odat, indat])
     
-
-        
+      
        
         
 # Vessel data
