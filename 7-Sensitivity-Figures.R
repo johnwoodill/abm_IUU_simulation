@@ -25,44 +25,66 @@ ster <- function(x, stat){
 
 
 
-# Figure S1 Sensitivity across n vessels from null simulation
-files <- list.files("~/Projects/abm_IUU_simulation/data/v0.51/null_sims/", full.names=TRUE)
-bdat <- rbindlist(lapply(files, read_csv))
-bdat <- as.data.frame(bdat)
+# Figure S2 Sensitivity across n vessels from null simulation
+# files <- list.files("~/Projects/abm_IUU_simulation/data/v0.51/null_sims/hundred_sims/", full.names=TRUE, pattern = "*.csv")
+# bdat <- rbindlist(lapply(files, read_csv))
+# bdat <- as.data.frame(bdat)
+# 
+# write_csv(bdat, "~/Projects/abm_IUU_simulation/data/full_null_sim_data.csv")
 
-dat1 <- bdat %>% 
-  group_by(nagents, t) %>% 
-  summarise(mean_ks = mean(ks),
-            kurt_ks = moments::kurtosis(ks))  %>% 
+# test <- filter(bdat, sim_count <= 5 & nagents <= 10)
+
+dat1 <- bdat %>%
+# dat1 <- test %>% 
+  group_by(t, nagents, sim_count) %>% 
+  summarise(mean_ks = mean(ks, na.rm = TRUE),
+            kurt_ks = moments::kurtosis(ks, na.rm = TRUE),
+            mean_95 = quantile(mean_ks, 0.95, na.rm = TRUE),
+            kurt_95 = quantile(kurt_ks, 0.95, na.rm = TRUE))  %>% 
   group_by(nagents) %>% 
-  summarise(mean_95 = quantile(mean_ks, 0.95, na.rm = TRUE),
-            kurt_95 = quantile(kurt_ks, 0.95, na.rm = TRUE))
+  summarise(mean_95_sd = sd(mean_95, na.rm = TRUE),
+            kurt_95_sd = sd(kurt_95, na.rm = TRUE),
+            mean_se = mean_95_sd/sqrt(n()),
+            kurt_se = kurt_95_sd/sqrt(n()),
+            mean_95 = mean(mean_95, na.rm = TRUE),
+            kurt_95 = mean(kurt_95, na.rm = TRUE))
 
 
+write_csv(dat1, "~/Projects/abm_IUU_simulation/data/full_null_sim_data_process.csv")
 
-ggplot(dat1, aes(nagents, mean_95)) + 
-  geom_point(size=1) + 
+sim_agent_lookup <- read_csv("~/Projects/abm_IUU_simulation/data/full_null_sim_data_process.csv")
+
+p1 <- ggplot(sim_agent_lookup, aes(nagents, mean_95)) + 
+  geom_point(size=.75) + 
   geom_line() + 
   ylim(0, .4) +
   theme_tufte(12) +
+  # geom_ribbon(aes(ymin = (mean_95 - mean_se*1.96),
+  #                 ymax = (mean_95 + mean_se*1.96))) +
   labs(x="Number of Agents", y="Anomaly Index (Mean)") +
     theme(panel.border = element_rect(colour = "grey", fill=NA, size=1),
         panel.grid = element_blank()) +
   NULL
 
-ggplot(dat1, aes(nagents, kurt_95)) + 
-  geom_point(size=1) + 
+p2 <- ggplot(sim_agent_lookup, aes(nagents, kurt_95)) + 
+  geom_point(size=.75) + 
   geom_line() + 
   ylim(0, 6) +
   theme_tufte(12) +
+  # geom_ribbon(aes(ymin = (kurt_95 - kurt_se*1.96),
+  #               ymax = (kurt_95 + kurt_se*1.96))) +
   labs(x="Number of Agents", y="Anomaly Index (Kurtosis)") +
     theme(panel.border = element_rect(colour = "grey", fill=NA, size=1),
         panel.grid = element_blank()) +
   NULL
 
+plot_grid(p1, p2, ncol=2, labels = c("A", "B"))
+ggsave("~/Projects/abm_IUU_simulation/figures/S2-ABM_Sensitivity_Mean_Kurt_Agents.png", width = 12, height = 4)
+
+
 
 # ---------------------------------------------------------
-# Figure S2 Sensitivity around IUU event - fraction of days alert in event window
+# Figure S3 Sensitivity around IUU event - fraction of days alert in event window
 # rblindlist all csv files
 files <- list.files("~/Projects/abm_IUU_simulation/data/full_sens/v0.51/", full.names = TRUE)
 ifiles <- list.files("~/Projects/abm_IUU_simulation/data/full_sens/v0.51/", full.names = FALSE)
@@ -74,7 +96,7 @@ for (i in 1:length(files)){
   agents <- str_extract(filename, "[^-]+")
   margin <- sub(".*ie", "", filename)
   margin <- substr(margin, 1, nchar(margin) - 4)
-
+  
   # Get mean, kurtosis, find 95% and filter out
   dat2 <- dat %>%
     group_by(t) %>%
@@ -82,8 +104,11 @@ for (i in 1:length(files)){
               kurt_ks = kurtosis(ks),
               mean_pvalue = mean(pvalue))
 
-  mean_95 <- quantile(filter(dat2, t <= 200)$mean_ks, c(0.95), na.rm=TRUE)
-  kurt_95 <- quantile(filter(dat2, t <= 200)$kurt_ks, c(0.95), na.rm=TRUE)
+  # mean_95 <- quantile(filter(dat2, t <= 200)$mean_ks, c(0.95), na.rm=TRUE)
+  # kurt_95 <- quantile(filter(dat2, t <= 200)$kurt_ks, c(0.95), na.rm=TRUE)
+  
+  mean_95 <- filter(sim_agent_lookup, nagents == agents)$mean_95
+  kurt_95 <- filter(sim_agent_lookup, nagents == agents)$kurt_95
 
   kurt_95 <- ifelse(is.na(kurt_95), 999, kurt_95)
 
@@ -103,25 +128,22 @@ for (i in 1:length(files)){
     mdat <- mean_mdat
   }
 
-  # mdat <- filter(mdat, mean_pvalue <= 0.05)
-
   write_csv(mdat, paste0("~/Projects/abm_IUU_simulation/data/figureS3_data/", agents, "-", margin, ".csv"))
   print(i)
 }
 
 files <- list.files("~/Projects/abm_IUU_simulation/data/figureS3_data/", full.names = TRUE)
-bdat <- rbindlist(lapply(files, read_csv))
-bdat <- as.data.frame(bdat)
+bdat2 <- rbindlist(lapply(files, read_csv))
+bdat2 <- as.data.frame(bdat2)
 
 
 # Get proportion of event window alert
-bdat$agents_margin <- paste0(bdat$agents, "_", bdat$margin)
+bdat2$agents_margin <- paste0(bdat2$agents, "_", bdat2$margin)
 
-head(bdat)
+head(bdat2)
 
 # Mean
-bdat2 <- bdat %>% 
-  # filter(metric == "mean" & margin <= 0.40) %>% 
+bdat3 <- bdat2 %>% 
   filter(metric == "mean") %>% 
   filter(t > 13*24 & t < 16*24) %>% 
   group_by(agents_margin) %>% 
@@ -133,7 +155,7 @@ bdat2 <- bdat %>%
 mdat <- data.frame(agents = rep(seq(2, 100, 1), each = 50),
                    margin = rep(seq(0.01, .50, .01)))
 
-test2 <- select(bdat2, agents, margin, frac)
+test2 <- select(bdat3, agents, margin, frac)
 mdat <- left_join(mdat, test2, by = c("agents", "margin"))
 mdat <- mdat[which(is.na(mdat$frac)), ]
 mdat
@@ -142,7 +164,7 @@ write_csv(mdat, "~/Projects/abm_IUU_simulation/data/sens/v0.51/missing_agents_se
 
 
 
-dp1 <- ggplot(bdat2, aes(x=margin*100, y=agents)) + 
+dp1 <- ggplot(bdat3, aes(x=margin*100, y=agents)) + 
   geom_tile(aes(fill=frac)) +
   theme_tufte(12) +
   ggtitle("Proportion of Alerted Days in Event Window \n (Mean Anomaly Index)") +
@@ -169,19 +191,18 @@ dp1 <- ggplot(bdat2, aes(x=margin*100, y=agents)) +
 dp1
 
 # Kurtosis
-bdat3 <- bdat %>% 
-  # filter(metric == "kurt" & margin <= 0.40) %>%
+bdat3 <- bdat2 %>% 
   filter(metric == "kurt") %>% 
-  filter(t > 14*24 & t <= 15*24) %>% 
+  filter(t > 13*24 & t <= 16*24) %>% 
   group_by(agents_margin) %>% 
-  summarise(frac = n()/24,
+  summarise(frac = n()/72,
             agents = mean(agents),
             margin = mean(margin))
 
 dp2 <- ggplot(bdat3, aes(x=margin*100, y=agents)) + 
   geom_tile(aes(fill=frac)) +
   theme_tufte(12) +
-  ggtitle("Proportion of Alert on 15th Day \n (Kurtosis Anomaly Index)") +
+  ggtitle("Proportion of Alerted Days in Event Window \n (Kurtosis Anomaly Index)") +
   labs(x="Exclusion Margin (km)", y="Number of Agents", fill="P(Days)") +
   lims(fill = c(0, 1)) +
   scale_fill_gradientn(colours=rev(brewer.pal(11, "Spectral")), na.value = 'salmon', 
@@ -210,11 +231,14 @@ dp2
 
 plot_grid(dp1, dp2, ncol = 1,labels = c("A", "B"))
 
-ggsave("figures/S3-ABM_Sensitivity_Mean_Prop_Days.png", width = 5.5, height = 8)
+ggsave("figures/S3-ABM_Sensitivity_Mean_Prop_Days.png", width = 6, height = 8)
   
 
 
 
+# ------------------------------------------
+# NOT IN USE
+# ------------------------------------------
 
 # rblindlist all csv files
 
